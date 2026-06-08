@@ -277,9 +277,15 @@
       var prev = $('#ed-prose');
       var tEl = $('#ed-title'), cEl = $('#ed-cat'), gEl = $('#ed-tags');
       var pvTitle = $('#pv-title'), pvCat = $('#pv-cat'), pvTags = $('#pv-tags'), pvDate = $('#pv-date');
+      var uploadedImages = {};   // { 사이트경로: dataURL } — 배포 전 미리보기용
 
       function render() {
         prev.innerHTML = md(area.value);
+        // 업로드한 이미지는 아직 배포 전이라, 미리보기에선 방금 읽은 데이터로 보여줌
+        Array.prototype.forEach.call(prev.querySelectorAll('img'), function (img) {
+          var s = img.getAttribute('src');
+          if (uploadedImages[s]) img.src = uploadedImages[s];
+        });
         var title = (tEl.value || '').trim();
         pvTitle.textContent = title || '제목 없음';
         pvCat.textContent = cEl.value || 'Uncategorized';
@@ -332,13 +338,36 @@
         if (url.indexOf('data:') === 0) return url;       // data URL 은 이미 안전
         try { return encodeURI(url); } catch (e) { return url; }
       }
+      // 이미지를 GitHub(assets/img/uploads/)에 파일로 업로드 → 본문엔 경로만 삽입 (data 안 박음)
+      function uploadImage(repoPath, dataUrl, fname) {
+        var a = authConf(), token = ghToken();
+        if (!a.repo || !token) { toast('이미지 업로드는 GitHub 로그인이 필요해요'); return; }
+        var b64 = (dataUrl.split(',')[1]) || '';
+        var api = 'https://api.github.com/repos/' + a.repo + '/contents/' + repoPath.split('/').map(encodeURIComponent).join('/');
+        fetch(api, {
+          method: 'PUT',
+          headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' },
+          body: JSON.stringify({ message: 'upload image: ' + fname, content: b64, branch: a.branch })
+        }).then(function (r) {
+          if (r.status === 201 || r.status === 200) toast('이미지 업로드됨: ' + fname);
+          else r.json().then(function (e) { toast('이미지 업로드 실패: ' + (e.message || r.status)); });
+        }).catch(function (e) { toast('이미지 업로드 실패: ' + e.message); });
+      }
       function handleImageFiles(files) {
         Array.prototype.forEach.call(files, function (f) {
           if (!f || f.type.indexOf('image/') !== 0) return;
           var reader = new FileReader();
           reader.onload = function (ev) {
-            var name = (f.name || 'image');               // 파일 제목(확장자 포함) 을 alt 로 표시
-            insertAtCursor('\n![' + name + '](' + encodeOneLine(ev.target.result) + ')\n');
+            var dataUrl = ev.target.result;
+            var ext = ((f.name || '').split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '') || 'png';
+            var base = (f.name || 'image').replace(/\.[^.]+$/, '').toLowerCase().replace(/[^\w가-힣]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 24) || 'img';
+            var rand = Math.random().toString(36).slice(2, 7);
+            var fname = today() + '-' + rand + '-' + base + '.' + ext;
+            var repoPath = 'assets/img/uploads/' + fname;
+            var sitePath = '/assets/img/uploads/' + fname;
+            uploadedImages[sitePath] = dataUrl;                       // 미리보기용
+            insertAtCursor('\n![' + (f.name || 'image') + '](' + sitePath + ')\n');   // 본문엔 경로만
+            uploadImage(repoPath, dataUrl, fname);                    // GitHub에 파일로 업로드
           };
           reader.readAsDataURL(f);
         });
