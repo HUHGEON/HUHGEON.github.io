@@ -27,6 +27,16 @@
   --faint:       #586271;
   --line:        rgba(255,255,255,.018);   /* faint grid */
 
+  /* 코드블록 (다크) */
+  --code-bg:   #1b2230;
+  --code-head: #212a3a;
+  --code-text: #d6deea;
+  --code-line: #2c3a4f;
+  --code-key:  #9ec1ec;
+  --code-str:  #9fd0a8;
+  --code-num:  #e0bd84;
+  --code-com:  #6f7d92;
+
   /* primary accent — dusty blue (default). Overridden at runtime. */
   --accent:      #7aa2c9;
   --accent-2:    #9bbbde;
@@ -63,6 +73,15 @@ body.light {
   --card-2:      #f3f4f0;
   --border:      #e5e6e0;
   --border-soft: #eeefe9;
+  /* 코드블록 (라이트) */
+  --code-bg:   #f5f6f2;
+  --code-head: #ebece6;
+  --code-text: #2a2e27;
+  --code-line: #e2e3dd;
+  --code-key:  #2f6aa8;
+  --code-str:  #3f7d4f;
+  --code-num:  #9a6a1a;
+  --code-com:  #9aa0a8;
   --text:        #1a1d22;
   --dim:         #5a626d;
   --faint:       #9aa1aa;
@@ -493,8 +512,8 @@ body.owner .post-actions { display: flex; }
 }
 .prose blockquote p { margin: 0; }
 
-.codeblock { border: 1px solid var(--border); border-radius: 13px; overflow: hidden; margin: 0 0 24px; background: var(--card-2); }
-.cb-head { display: flex; align-items: center; gap: 8px; padding: 10px 15px; border-bottom: 1px solid var(--border-soft); background: color-mix(in srgb, var(--card-2), #fff 8%); }
+.codeblock { border: 1px solid var(--code-line); border-radius: 13px; overflow: hidden; margin: 0 0 24px; background: var(--code-bg); }
+.cb-head { display: flex; align-items: center; gap: 8px; padding: 10px 15px; border-bottom: 1px solid var(--code-line); background: var(--code-head); }
 .cb-head .d { width: 10px; height: 10px; border-radius: 50%; }
 .cb-head .lang { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--faint); }
 .cb-head .copy {
@@ -504,13 +523,13 @@ body.owner .post-actions { display: flex; }
 }
 .cb-head .copy:hover { color: var(--accent); border-color: var(--accent-line); }
 .cb-head .copy svg { width: 12px; height: 12px; fill: currentColor; }
-.codeblock pre { margin: 0; padding: 16px 18px; overflow-x: auto; font-family: var(--mono); font-size: 13.5px; line-height: 1.75; color: var(--text); }
+.codeblock pre { margin: 0; padding: 16px 18px; overflow-x: auto; font-family: var(--mono); font-size: 13.5px; line-height: 1.75; color: var(--code-text); }
 .codeblock pre::-webkit-scrollbar { height: 8px; }
 .codeblock pre::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-.tok-key { color: var(--accent); }
-.tok-str { color: var(--str); }
-.tok-com { color: var(--faint); font-style: italic; }
-.tok-num { color: var(--num); }
+.tok-key { color: var(--code-key); }
+.tok-str { color: var(--code-str); }
+.tok-com { color: var(--code-com); font-style: italic; }
+.tok-num { color: var(--code-num); }
 
 .post-tags { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 0; }
 .post-tags .tag { font-size: 13px; padding: 6px 13px; }
@@ -886,15 +905,15 @@ body.editing .topbar { display: none; }
 
 /* highlight.js 토큰을 디자인 팔레트로 매핑 (코드블록 색) */
 .codeblock pre code.hljs,
-.prose pre code.hljs { background: transparent; padding: 0; color: var(--text); border: none; }
-.hljs-comment, .hljs-quote { color: var(--faint); font-style: italic; }
+.prose pre code.hljs { background: transparent; padding: 0; color: var(--code-text); border: none; }
+.hljs-comment, .hljs-quote { color: var(--code-com); font-style: italic; }
 .hljs-keyword, .hljs-selector-tag, .hljs-built_in, .hljs-name, .hljs-tag,
-.hljs-meta, .hljs-doctag, .hljs-section { color: var(--accent); }
+.hljs-meta, .hljs-doctag, .hljs-section { color: var(--code-key); }
 .hljs-string, .hljs-attr, .hljs-symbol, .hljs-bullet, .hljs-addition,
-.hljs-regexp, .hljs-template-tag { color: var(--str); }
-.hljs-number, .hljs-literal, .hljs-variable, .hljs-deletion { color: var(--num); }
+.hljs-regexp, .hljs-template-tag { color: var(--code-str); }
+.hljs-number, .hljs-literal, .hljs-variable, .hljs-deletion { color: var(--code-num); }
 .hljs-title, .hljs-function .hljs-title, .hljs-class .hljs-title,
-.hljs-type, .hljs-attribute { color: var(--accent-2); }
+.hljs-type, .hljs-attribute { color: var(--code-key); }
 .hljs-emphasis { font-style: italic; }
 .hljs-strong { font-weight: 700; }
 
