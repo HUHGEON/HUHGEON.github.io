@@ -10,18 +10,22 @@ permissions:
   pages: write
   id-token: write
 
-# 동시에 하나의 배포만 실행되도록 보장
+# 한 번에 하나의 배포만 (배포 중 취소는 하지 않음 — 반쯤 배포 방지)
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  build:
+  # build + deploy 를 한 잡으로 합쳐 러너 startup 시간을 줄임
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Ruby
+      - name: Setup Ruby (gem 캐시 사용)
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3'
@@ -35,14 +39,6 @@ jobs:
           JEKYLL_ENV: production
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
