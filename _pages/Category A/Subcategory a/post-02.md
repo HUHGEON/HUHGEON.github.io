@@ -1,10 +1,8 @@
 ---
 title: "Example Post: thumbnail exists"
-date: "2023-12-02"
-thumbnail: "/assets/img/thumbnail/bricks.webp"
+date: "2026-06-08"
 ---
-
-# Follow the guidance
+# Follow the guidances
 ---
 
 **Fill the image path to the 'thumbnail' attribute, if you want a main image to be displayed on the post header image.**
