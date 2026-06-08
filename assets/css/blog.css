@@ -493,7 +493,7 @@ body.owner .post-actions { display: flex; }
 }
 .prose blockquote p { margin: 0; }
 
-.codeblock { border: 1px solid var(--border); border-radius: 13px; overflow: hidden; margin: 0 0 24px; background: var(--surface); }
+.codeblock { border: 1px solid var(--border); border-radius: 13px; overflow: hidden; margin: 0 0 24px; background: var(--card-2); }
 .cb-head { display: flex; align-items: center; gap: 8px; padding: 10px 15px; border-bottom: 1px solid var(--border-soft); background: var(--card); }
 .cb-head .d { width: 10px; height: 10px; border-radius: 50%; }
 .cb-head .lang { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--faint); }
