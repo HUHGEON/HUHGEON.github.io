@@ -184,6 +184,10 @@
      ============================================================ */
   function catCount(cat) { return POSTS.filter(function (p) { return p.cat === cat; }).length; }
   function subCount(cat, sub) { return POSTS.filter(function (p) { return p.cat === cat && p.sub === sub; }).length; }
+  function nodeDesc(cat, sub) {
+    for (var i = 0; i < CAT_NODES.length; i++) { var n = CAT_NODES[i]; if (n.cat === cat && (n.sub || '') === (sub || '')) return n.desc || ''; }
+    return '';
+  }
 
   function catUrl(cat) { return BASE + '/' + encodeURIComponent(cat) + '/'; }
   function subUrl(cat, sub) { return BASE + '/' + encodeURIComponent(cat) + '/' + encodeURIComponent(sub) + '/'; }
@@ -353,6 +357,7 @@
         '<div class="cat-h-cmd"><b>$</b> ls ~/' + pathHtml + '</div>' +
         (sub ? '<div class="cat-crumb"><a href="' + catUrl + '">' + esc(cat) + '</a> <span class="catsep">·</span> ' + esc(sub) + '</div>' : '') +
         '<h1>' + esc(label) + '</h1><p class="sub">' + list.length + '개의 글</p>' +
+        (nodeDesc(cat, sub) ? '<p class="cat-desc">' + esc(nodeDesc(cat, sub)) + '</p>' : '') +
         (list.length === 0 ? '<div class="cat-empty">아직 이 카테고리에 글이 없어요 — 새 글 쓰기로 첫 글을 남겨보세요.</div>' : '') +
       '</div>' +
       (list.length > 1 ? sortToggle() : '') +

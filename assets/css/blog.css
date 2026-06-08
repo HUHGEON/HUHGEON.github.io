@@ -1253,3 +1253,9 @@ body.owner .sb-login { display: none; }
 .tax-grip:active { cursor: grabbing; }
 .tax-row.dragging { opacity: .45; }
 .tax-row.drop-target { outline: 2px dashed var(--accent); outline-offset: -2px; border-radius: 8px; }
+
+/* 카테고리 설명 */
+.tax-descrow { padding: 0 8px 9px 30px; }
+.tax-desc { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 7px; padding: 7px 11px; font-size: 12.5px; color: var(--dim); font-family: var(--sans); }
+.tax-desc:focus { outline: none; border-color: var(--accent-line); color: var(--text); }
+.cat-header .cat-desc { margin: 10px 0 0; color: var(--dim); font-size: 14.5px; line-height: 1.65; max-width: 640px; }

@@ -46,9 +46,9 @@ window.CAT_NODES = [
   {%- assign last = tree | last -%}
   {%- assign depth = tree | size -%}
   {%- if last == "index.md" and depth == 2 -%}
-    { "cat": {{ tree[0] | jsonify }}, "sub": "", "url": {{ p.url | remove: 'index.html' | prepend: site.baseurl | jsonify }}, "order": {{ p.order | default: 9999 }} },
+    { "cat": {{ tree[0] | jsonify }}, "sub": "", "url": {{ p.url | remove: 'index.html' | prepend: site.baseurl | jsonify }}, "order": {{ p.order | default: 9999 }}, "desc": {{ p.description | default: "" | jsonify }} },
   {%- elsif last == "index.md" and depth == 3 -%}
-    { "cat": {{ tree[0] | jsonify }}, "sub": {{ tree[1] | jsonify }}, "url": {{ p.url | remove: 'index.html' | prepend: site.baseurl | jsonify }}, "order": {{ p.order | default: 9999 }} },
+    { "cat": {{ tree[0] | jsonify }}, "sub": {{ tree[1] | jsonify }}, "url": {{ p.url | remove: 'index.html' | prepend: site.baseurl | jsonify }}, "order": {{ p.order | default: 9999 }}, "desc": {{ p.description | default: "" | jsonify }} },
   {%- endif -%}
 {%- endfor -%}
 ];
