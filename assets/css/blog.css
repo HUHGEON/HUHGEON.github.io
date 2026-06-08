@@ -365,6 +365,12 @@ body.owner .owner-flag { display: inline-flex; }
   content: ''; position: absolute; inset: 0;
   background: linear-gradient(180deg, rgba(7,8,11,.15) 0%, rgba(7,8,11,.55) 52%, rgba(7,8,11,.94) 100%);
 }
+/* 전용 커버 없는 글: 테마 그라데이션 배경 (이미지 안 늘려서 깔끔) */
+.hero .bg-grad {
+  background:
+    radial-gradient(130% 130% at 88% -25%, color-mix(in srgb, var(--accent), transparent 45%) 0%, transparent 52%),
+    linear-gradient(150deg, #1d2633 0%, #161d27 50%, #0f1319 100%);
+}
 .hero .inner { position: relative; padding: 40px 42px; max-width: 660px; }
 .kicker {
   display: inline-flex; align-items: center; gap: 7px;
