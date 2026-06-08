@@ -192,20 +192,25 @@
   function buildCatTree() {
     // group CAT_NODES into { cat: {url, subs:[{name,url}]} }
     var order = [], map = {};
+    var ord = function (n) { return (n && n.order != null) ? n.order : 9999; };
     CAT_NODES.forEach(function (n) {
       // 부모 index.md 없어도 /카테고리/ 로 이동되게 기본 url 구성 (홈으로 빠지지 않음)
-      if (!map[n.cat]) { map[n.cat] = { name: n.cat, url: catUrl(n.cat), subs: [] }; order.push(n.cat); }
-      if (!n.sub) { map[n.cat].url = n.url; }
-      else { map[n.cat].subs.push({ name: n.sub, url: n.url }); }
+      if (!map[n.cat]) { map[n.cat] = { name: n.cat, url: catUrl(n.cat), subs: [], _o: 9999 }; order.push(n.cat); }
+      if (!n.sub) { map[n.cat].url = n.url; map[n.cat]._o = ord(n); }
+      else { map[n.cat].subs.push({ name: n.sub, url: n.url, _o: ord(n) }); }
     });
     // posts may reference cats with no index.md — include them too
     POSTS.forEach(function (p) {
-      if (!map[p.cat]) { map[p.cat] = { name: p.cat, url: catUrl(p.cat), subs: [] }; order.push(p.cat); }
+      if (!map[p.cat]) { map[p.cat] = { name: p.cat, url: catUrl(p.cat), subs: [], _o: 9999 }; order.push(p.cat); }
       if (p.sub && !map[p.cat].subs.some(function (s) { return s.name === p.sub; })) {
-        map[p.cat].subs.push({ name: p.sub, url: subUrl(p.cat, p.sub) });
+        map[p.cat].subs.push({ name: p.sub, url: subUrl(p.cat, p.sub), _o: 9999 });
       }
     });
-    return order.map(function (c) { return map[c]; });
+    var result = order.map(function (c) { return map[c]; });
+    // order 기준 정렬 (같으면 기존=알파벳 순서 유지)
+    result.forEach(function (c) { c.subs.sort(function (a, b) { return a._o - b._o; }); });
+    result.sort(function (a, b) { return (a._o !== b._o) ? a._o - b._o : (order.indexOf(a.name) - order.indexOf(b.name)); });
+    return result;
   }
 
   function renderSidebar() {
