@@ -36,7 +36,7 @@
     h = h.replace(/(^|\n)(\s*(?:#|\/\/)[^\n]*)/g, function (_, br, c) { return br + '<span class="tok-com">' + c + '</span>'; });
     h = h.replace(/(&quot;[^&]*?&quot;|'[^']*?')/g, '<span class="tok-str">$1</span>');
     if (lang === 'yaml' || lang === 'yml' || lang === '') { h = h.replace(/(^|\n)(\s*[\w-]+)(:)/g, '$1<span class="tok-key">$2</span>$3'); }
-    h = h.replace(/\b(const|let|var|function|return|if|else|for|while|import|from|export|class|true|false|null|def|new)\b/g, '<span class="tok-key">$1</span>');
+    h = h.replace(/\b(const|let|var|function|return|if|else|for|while|import|from|export|class|true|false|null|def|new)\b(?!=)/g, '<span class="tok-key">$1</span>');
     h = h.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="tok-num">$1</span>');
     return h;
   }
@@ -423,7 +423,7 @@
             if (!nr || nr < 1) nr = 1;
             nc = Math.min(nc, 12); nr = Math.min(nr, 50);
             var emptyRow = '|', sep = '|';
-            for (var ci = 0; ci < nc; ci++) { emptyRow += ' |'; sep += ' --- |'; }
+            for (var ci = 0; ci < nc; ci++) { emptyRow += '  |'; sep += ' --- |'; }
             var out2 = '\n' + emptyRow + '\n' + sep + '\n';   // 헤더(빈칸) + 구분선
             for (var ri = 0; ri < nr; ri++) out2 += emptyRow + '\n';
             insertAtCursor(out2);

@@ -38,9 +38,9 @@
   --code-com:  #6f7d92;
 
   /* 표 (다크) */
-  --tbl-border:    #2a3343;
+  --tbl-border:    #34415a;
   --tbl-head:      #232c3b;
-  --tbl-line:      #232b38;
+  --tbl-line:      #323f55;
   --tbl-row:       #161b24;
   --tbl-row-alt:   #1a212c;
   --tbl-row-hover: #1f2835;
@@ -81,19 +81,19 @@ body.light {
   --card-2:      #f3f4f0;
   --border:      #e5e6e0;
   --border-soft: #eeefe9;
-  /* 코드블록 (라이트) */
-  --code-bg:   #f5f6f2;
-  --code-head: #ebece6;
-  --code-text: #2a2e27;
-  --code-line: #e2e3dd;
-  --code-key:  #2f6aa8;
-  --code-str:  #3f7d4f;
-  --code-num:  #9a6a1a;
-  --code-com:  #9aa0a8;
+  /* 코드블록 (라이트 — 블루 일관성) */
+  --code-bg:   #eef2f8;
+  --code-head: #e3e9f3;
+  --code-text: #28303d;
+  --code-line: #d5deec;
+  --code-key:  #3163a0;
+  --code-str:  #2f7d6a;
+  --code-num:  #9a6d2e;
+  --code-com:  #8893a4;
   /* 표 (라이트) */
-  --tbl-border:    #d7e0ee;
+  --tbl-border:    #c4d1e6;
   --tbl-head:      #e7edf6;
-  --tbl-line:      #e1e8f2;
+  --tbl-line:      #cdd9ec;
   --tbl-row:       #ffffff;
   --tbl-row-alt:   #f5f8fc;
   --tbl-row-hover: #eef3fa;
@@ -631,6 +631,8 @@ select.ed-input { cursor: pointer; }
 .ed-tool:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-line); }
 .ed-tool svg { width: 15px; height: 15px; fill: currentColor; }
 .ed-tool .u { text-decoration: underline; }
+/* 표·다이어그램 글리프는 다른 버튼만큼 또렷하게 크게 */
+.ed-tool[data-md="table"], .ed-tool[data-md="mermaid"] { font-size: 18px; line-height: 1; }
 /* 호버 시 기능 이름 툴팁 */
 .ed-tool::after {
   content: attr(data-tip);
