@@ -37,7 +37,7 @@
                 <div class="post-hero">
                     <div class="cat">
                         <svg style="width:14px;height:14px;fill:currentColor" viewBox="0 0 576 512"><path d="M0 96C0 60.7 28.7 32 64 32H181.5c17 0 33.3 6.7 45.3 18.7l26.5 26.5c6 6 14.1 9.4 22.6 9.4H448c35.3 0 64 28.7 64 64H272.5c-17 0-33.3-6.7-45.3-18.7l-26.5-26.5c-6-6-14.1-9.4-22.6-9.4H64c-17.7 0-32 14.3-32 32V416l50.9-152.7C91 232 119.2 211.2 151 211.2H536c10.3 0 20 5 25.9 13.4s7.4 19.2 4.1 28.9l-64 192c-8.7 26.1-33.2 43.7-60.7 43.7H64C28.7 489.2 0 460.5 0 425.2V96z"></path></svg>
-                        {{ post_cat }}{% if post_sub != "" %} · {{ post_sub }}{% endif %}
+                        <a href="{{ '/' | append: post_cat | append: '/' | prepend: site.baseurl }}">{{ post_cat }}</a>{% if post_sub != "" %} <span class="catsep">·</span> <a href="{{ '/' | append: post_cat | append: '/' | append: post_sub | append: '/' | prepend: site.baseurl }}">{{ post_sub }}</a>{% endif %}
                     </div>
                     <h1>{{ page.title }}</h1>
                     {% if page.description %}<p class="lead">{{ page.description }}</p>{% endif %}
