@@ -16,10 +16,10 @@
     <head>
         {% include head.html %}
         {% include auth_config.html %}
+        {% if site.goatcounter_code %}
+            <script data-goatcounter="https://{{ site.goatcounter_code }}.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+        {% endif %}
         {% if page_type == "post" and is_doc == false %}
-            {% if site.goatcounter_code %}
-                <script data-goatcounter="https://{{ site.goatcounter_code }}.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
-            {% endif %}
             <meta name="giscus_repo" content="{{ site.giscus_repo }}">
             <meta name="giscus_repoId" content="{{ site.giscus_repoId }}">
             <meta name="giscus_category" content="{{ site.giscus_category }}">

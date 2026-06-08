@@ -516,10 +516,9 @@
       }
     }
 
-    /* 조회수: 워커 KV는 전역 countViews()가 처리. 여기선 goatcounter 폴백만. */
+    /* 조회수: goatcounter 우선(있으면), 없으면 워커 KV(countViews) 처리 */
     var hits = $('#page-hits'); var viewsWrap = $('.stat-views');
-    var oauthSet = !!((window.AUTH || {}).oauthUrl);
-    if (hits && !oauthSet && hits.getAttribute('data-gc')) {
+    if (hits && hits.getAttribute('data-gc')) {
       if (viewsWrap) viewsWrap.hidden = false;
       var code = hits.getAttribute('data-gc');
       var gurl = 'https://' + code + '.goatcounter.com/counter/' + encodeURIComponent(location.pathname) + '.json';
@@ -527,7 +526,7 @@
       x.onerror = function () { hits.textContent = '0'; };
       x.onload = function () { try { hits.textContent = JSON.parse(x.responseText).count; } catch (e) { hits.textContent = '0'; } };
       x.send();
-    } else if (hits && !oauthSet && viewsWrap) {
+    } else if (hits && !((window.AUTH || {}).oauthUrl) && viewsWrap) {
       viewsWrap.hidden = true;   // 카운터 미설정 → views 숨김
     }
 
@@ -588,9 +587,9 @@
     // close drawer when navigating via sidebar link on mobile
     if (sb) sb.addEventListener('click', function (e) { if (e.target.closest('a') && window.innerWidth <= 940) setTimeout(closeDrawer, 50); });
 
-    // sidebar 총 방문: 워커 미설정 시 goatcounter total (워커는 countViews()가 처리)
+    // sidebar 총 방문: goatcounter 우선 (없으면 워커는 countViews()가 처리)
     var sh = $('#site-hits');
-    if (sh && !((window.AUTH || {}).oauthUrl) && sh.getAttribute('data-gc')) {
+    if (sh && sh.getAttribute('data-gc')) {
       var code = sh.getAttribute('data-gc');
       var url = 'https://' + code + '.goatcounter.com/counter/TOTAL.json';
       var x = new XMLHttpRequest(); x.open('GET', url);
@@ -602,6 +601,7 @@
 
   /* 워커 KV 조회수: 페이지당 1회 호출 → 글 조회수 + 총 방문 동시 갱신 */
   function countViews() {
+    if (document.querySelector('[data-gc]')) return;   // goatcounter 사용 중이면 워커 건너뜀
     var ou = ((window.AUTH || {}).oauthUrl || '').replace(/\/$/, '');
     if (!ou) return;
     fetch(ou + '/views?path=' + encodeURIComponent(location.pathname))
