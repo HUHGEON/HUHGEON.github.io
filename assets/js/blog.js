@@ -356,8 +356,11 @@
         '<button class="cat-back" data-home="1">← 전체 글</button>' +
         '<div class="cat-h-cmd"><b>$</b> ls ~/' + pathHtml + '</div>' +
         (sub ? '<div class="cat-crumb"><a href="' + catUrl + '">' + esc(cat) + '</a> <span class="catsep">·</span> ' + esc(sub) + '</div>' : '') +
-        '<h1>' + esc(label) + '</h1><p class="sub">' + list.length + '개의 글</p>' +
-        (nodeDesc(cat, sub) ? '<p class="cat-desc">' + esc(nodeDesc(cat, sub)) + '</p>' : '') +
+        '<div class="cat-titlerow"><h1>' + esc(label) + '</h1>' +
+          (nodeDesc(cat, sub) ? '<div class="cat-readme"><span class="rl"><span class="rl-d">$</span> cat README.md</span>' +
+            '<span class="rl"><span class="rl-h">#</span> ' + esc(nodeDesc(cat, sub)) + '</span></div>' : '') +
+        '</div>' +
+        '<p class="sub">' + list.length + '개의 글</p>' +
         (list.length === 0 ? '<div class="cat-empty">아직 이 카테고리에 글이 없어요 — 새 글 쓰기로 첫 글을 남겨보세요.</div>' : '') +
       '</div>' +
       (list.length > 1 ? sortToggle() : '') +

@@ -1254,8 +1254,14 @@ body.owner .sb-login { display: none; }
 .tax-row.dragging { opacity: .45; }
 .tax-row.drop-target { outline: 2px dashed var(--accent); outline-offset: -2px; border-radius: 8px; }
 
-/* 카테고리 설명 */
+/* 카테고리 설명 — 관리 입력칸 */
 .tax-descrow { padding: 0 8px 9px 30px; }
+.tax-descrow.child { padding-left: 49px; }   /* 세부는 한 단계 더 들여쓰기 */
 .tax-desc { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 7px; padding: 7px 11px; font-size: 12.5px; color: var(--dim); font-family: var(--sans); }
 .tax-desc:focus { outline: none; border-color: var(--accent-line); color: var(--text); }
-.cat-header .cat-desc { margin: 10px 0 0; color: var(--dim); font-size: 14.5px; line-height: 1.65; max-width: 640px; }
+/* 카테고리 설명 — 페이지 표시 (README 블록, 제목 우측) */
+.cat-titlerow { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px 18px; }
+.cat-titlerow h1 { margin: 0; }
+.cat-readme { margin-left: auto; display: flex; flex-direction: column; text-align: left; font-family: var(--mono); font-size: 13px; line-height: 1.6; color: var(--dim); }
+.cat-readme .rl-d { color: var(--accent); }
+.cat-readme .rl-h { color: var(--c-cat); }
