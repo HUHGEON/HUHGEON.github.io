@@ -403,10 +403,9 @@
       function buildDoc() {
         var title = (tEl.value || '').trim() || '제목 없음';
         var tags = (gEl.value || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-        var firstImg = (area.value.match(/!\[[^\]]*\]\(([^)]+)\)/) || [])[1] || '';   // 첫 이미지 = 대표(커버)
         var fm = ['---', 'title: "' + title.replace(/"/g, '\\"') + '"', 'date: "' + today() + '"'];
         if (tags.length) { fm.push('tags:'); tags.forEach(function (t) { fm.push('    - ' + t); }); }
-        if (firstImg && firstImg.indexOf('data:') !== 0) fm.push('thumbnail: "' + firstImg + '"');
+        // 썸네일은 자동 설정하지 않음 (본문 이미지가 커버로 중복되지 않게)
         fm.push('---', '');
         var slug = title.toLowerCase().replace(/[^\w가-힣\s-]/g, '').replace(/\s+/g, '-').slice(0, 40) || 'untitled';
         return { title: title, content: fm.join('\n') + area.value + '\n', slug: slug };
@@ -415,6 +414,10 @@
         var v = (cEl && cEl.value || '').trim();
         if (!v) return 'Blog';
         return v.split(/\s*·\s*/).join('/');   // "Cat · Sub" → "Cat/Sub"
+      }
+      function pathToUrl(mdPath) {   // _pages/A/B/file.md → /A/B/file.html (URL 인코딩)
+        var u = mdPath.replace(/^_pages\//, '').replace(/\.md$/, '.html');
+        return '/' + u.split('/').map(encodeURIComponent).join('/');
       }
       function downloadMd(content, fname) {
         var blob = new Blob([content], { type: 'text/markdown' });
@@ -434,13 +437,21 @@
           githubPutFile(conf, token, path, doc.content, (editingUrl ? 'edit: ' : 'post: ') + doc.title)
             .then(function (res) {
               localStorage.removeItem('hg-edit');
-              toast('✅ ' + path + ' 커밋 완료 — Actions가 자동 배포합니다');
+              var postUrl = editingUrl || pathToUrl(path);
+              toast('✅ 발행됨! 빌드 중… 글이 올라오면 자동으로 이동해요 (최대 3분)');
+              var tries = 0;
+              var poll = setInterval(function () {
+                tries++;
+                fetch(postUrl, { method: 'HEAD', cache: 'no-store' })
+                  .then(function (r) { if (r.ok) { clearInterval(poll); location.href = postUrl; } else if (tries >= 24) { clearInterval(poll); location.href = postUrl; } })
+                  .catch(function () { if (tries >= 24) { clearInterval(poll); location.href = postUrl; } });
+              }, 8000);
             })
             .catch(function (err) {
               toast('푸시 실패(' + err.message + ') — .md 파일로 대신 받을게요');
               downloadMd(doc.content, fname);
-            })
-            .then(function () { pub.disabled = false; });
+              pub.disabled = false;
+            });
         } else {
           toast('먼저 GitHub로 로그인하세요');
           loginGitHub();
