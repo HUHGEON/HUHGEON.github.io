@@ -621,7 +621,7 @@
     var attrs = {
       src: 'https://giscus.app/client.js', 'data-repo': repo, 'data-repo-id': repoId,
       'data-category': category, 'data-category-id': categoryId, 'data-mapping': 'pathname',
-      'data-reactions-enabled': '1', 'data-emit-metadata': '1', 'data-theme': giscusTheme(),
+      'data-reactions-enabled': '0', 'data-emit-metadata': '1', 'data-theme': giscusTheme(),
       'data-lang': 'ko', crossorigin: 'anonymous', async: ''
     };
     Object.keys(attrs).forEach(function (k) { s.setAttribute(k, attrs[k]); });
