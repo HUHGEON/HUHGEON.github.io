@@ -26,10 +26,10 @@ linkedin_username:
 facebook_username:
 
 # External API (giscus 댓글은 나중에 본인 저장소로 설정 — docs/Comment System.md 참고)
-giscus_repo:
-giscus_repoId:
-giscus_category:
-giscus_categoryId:
+giscus_repo: "HUHGEON/HUHGEON.github.io"
+giscus_repoId: "R_kgDOSz8b8A"
+giscus_category: "Announcements"
+giscus_categoryId: "DIC_kwDOSz8b8M4C-vfV"
 goatcounter_code: huhgeon
 google_analytics:
 
