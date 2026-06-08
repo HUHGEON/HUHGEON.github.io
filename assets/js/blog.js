@@ -457,18 +457,37 @@
     if (likeBtn) {
       var key = likeBtn.getAttribute('data-likekey') || 'hg-like';
       var likeCount = $('#like-count'), byl = $('#byline-likes');
+      var likeOu = ((window.AUTH || {}).oauthUrl || '').replace(/\/$/, '');
+      var liked = localStorage.getItem(key) === '1';
+      var serverCount = null;   // 워커 KV 총 좋아요 수(있으면)
       function paintLike() {
-        var on = localStorage.getItem(key) === '1';
-        likeBtn.classList.toggle('on', on);
-        likeBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-        var v = on ? 1 : 0;
+        likeBtn.classList.toggle('on', liked);
+        likeBtn.setAttribute('aria-pressed', liked ? 'true' : 'false');
+        var v = (serverCount != null) ? serverCount : (liked ? 1 : 0);
         if (likeCount) likeCount.textContent = v;
         if (byl) byl.textContent = v;
       }
-      likeBtn.addEventListener('click', function () {
-        localStorage.setItem(key, localStorage.getItem(key) === '1' ? '0' : '1'); paintLike();
-      });
       paintLike();
+      if (likeOu) {
+        fetch(likeOu + '/like?path=' + encodeURIComponent(location.pathname))
+          .then(function (r) { return r.json(); })
+          .then(function (j) { if (j && j.count != null) { serverCount = j.count; paintLike(); } })
+          .catch(function () {});
+      }
+      likeBtn.addEventListener('click', function () {
+        liked = !liked;
+        localStorage.setItem(key, liked ? '1' : '0');
+        if (likeOu) {
+          if (serverCount != null) serverCount = Math.max(0, serverCount + (liked ? 1 : -1));
+          paintLike();
+          fetch(likeOu + '/like?path=' + encodeURIComponent(location.pathname) + '&op=' + (liked ? 'inc' : 'dec'), { method: 'POST' })
+            .then(function (r) { return r.json(); })
+            .then(function (j) { if (j && j.count != null) { serverCount = j.count; paintLike(); } })
+            .catch(function () {});
+        } else {
+          paintLike();   // 워커 없으면 로컬 토글(0/1)
+        }
+      });
     }
 
     /* edit → 에디터로 글 원문 넘기기 */

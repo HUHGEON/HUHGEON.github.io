@@ -38,6 +38,25 @@ export default {
       return new Response(JSON.stringify({ count: n, total: t }), { headers: cors });
     }
 
+    // 0-2) 좋아요 카운터 (KV 바인딩 `VIEWS` 재사용). GET=조회, POST=±1
+    if (url.pathname === '/like') {
+      const cors = {
+        'Access-Control-Allow-Origin': allowOrigin,
+        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+        'Content-Type': 'application/json',
+      };
+      if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
+      if (!env.VIEWS) return new Response(JSON.stringify({ count: null, error: 'no-kv' }), { headers: cors });
+      const p = (url.searchParams.get('path') || '/').slice(0, 300);
+      const key = 'l:' + p;
+      let n = parseInt((await env.VIEWS.get(key)) || '0', 10) || 0;
+      if (request.method === 'POST') {
+        n = Math.max(0, n + (url.searchParams.get('op') === 'dec' ? -1 : 1));
+        await env.VIEWS.put(key, String(n));
+      }
+      return new Response(JSON.stringify({ count: n }), { headers: cors });
+    }
+
     // 1) 로그인 시작 → GitHub 인증 페이지로
     if (url.pathname === '/auth' || url.pathname === '/') {
       const redirectUri = url.origin + '/callback';
