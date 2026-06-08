@@ -55,18 +55,19 @@ export default {
       'Content-Type': 'application/json',
     };
 
-    // ② 조회수: 방문 시 +1, {count(글별), total(전체)} 반환
+    // ② 조회수: inc=1 일 때만 +1(쓰기), 아니면 읽기만 → KV 쓰기 한도 절약
     if (url.pathname === '/views') {
       if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
       const p = (url.searchParams.get('path') || '/').slice(0, 300);
+      const inc = url.searchParams.get('inc') === '1';
       if (env.COUNTER) {
-        const count = await doCount(env, 'v:' + p, 'inc');
-        const total = await doCount(env, '__total__', 'inc');
+        const count = await doCount(env, 'v:' + p, inc ? 'inc' : 'get');
+        const total = await doCount(env, '__total__', inc ? 'inc' : 'get');
         return new Response(JSON.stringify({ count, total }), { headers: cors });
       }
       if (!env.VIEWS) return new Response(JSON.stringify({ count: null, error: 'no-store' }), { headers: cors });
-      const count = await kvCount(env, 'v:' + p, 1);
-      const total = await kvCount(env, 'v:__total__', 1);
+      const count = await kvCount(env, 'v:' + p, inc ? 1 : 0);
+      const total = await kvCount(env, 'v:__total__', inc ? 1 : 0);
       return new Response(JSON.stringify({ count, total }), { headers: cors });
     }
 

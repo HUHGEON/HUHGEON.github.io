@@ -737,11 +737,14 @@
     }
   }
 
-  /* 워커 조회수(DO/KV): 페이지당 1회 호출 → 글 조회수 + 총 방문 동시 갱신 */
+  /* 워커 조회수: 같은 브라우저는 글당 1번만 +1(쓰기), 그 외엔 읽기만 → KV 쓰기 한도 절약 */
   function countViews() {
     var ou = ((window.AUTH || {}).oauthUrl || '').replace(/\/$/, '');
     if (!ou) return;
-    fetch(ou + '/views?path=' + encodeURIComponent(location.pathname))
+    var vkey = 'hg-viewed:' + location.pathname;
+    var firstView = !localStorage.getItem(vkey);
+    if (firstView) { try { localStorage.setItem(vkey, '1'); } catch (e) {} }
+    fetch(ou + '/views?path=' + encodeURIComponent(location.pathname) + (firstView ? '&inc=1' : ''))
       .then(function (r) { return r.json(); })
       .then(function (j) {
         if (!j) return;
