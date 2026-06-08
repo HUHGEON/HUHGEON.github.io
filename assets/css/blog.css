@@ -708,7 +708,7 @@ select.ed-input { cursor: pointer; }
   border: 1px solid transparent; transition: background .12s;
 }
 .tax-row:hover { background: var(--card-2); }
-.tax-row.child { margin-left: 22px; }
+.tax-row.child { margin-left: 14px; }
 .tax-row.child::before {
   content: ''; width: 9px; height: 9px; border-left: 1.5px solid var(--border);
   border-bottom: 1.5px solid var(--border); margin: -8px 2px 0 -10px; flex-shrink: 0; border-radius: 0 0 0 3px;
@@ -1258,7 +1258,7 @@ body.owner .sb-login { display: none; }
 
 /* 카테고리 설명 — 관리 입력칸 (작게) */
 .tax-descrow { padding: 0 8px 5px 30px; }
-.tax-descrow.child { padding-left: 49px; }   /* 세부는 한 단계 더 들여쓰기 */
+.tax-descrow.child { padding-left: 41px; }   /* 세부는 한 단계 더 들여쓰기 */
 .tax-desc { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 3px 9px; font-size: 11px; color: var(--dim); font-family: var(--sans); }
 .tax-desc:focus { outline: none; border-color: var(--accent-line); color: var(--text); }
 /* 카테고리 설명 — 페이지 표시 (README 블록, 제목 우측) */
