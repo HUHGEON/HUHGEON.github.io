@@ -438,13 +438,21 @@
             .then(function (res) {
               localStorage.removeItem('hg-edit');
               var postUrl = editingUrl || pathToUrl(path);
-              toast('✅ 발행됨! 빌드 중… 글이 올라오면 자동으로 이동해요 (최대 3분)');
+              // 배포된 페이지에 "새 제목 + 본문 끝 일부"가 실제로 반영됐는지 확인하고 이동
+              var mTitle = (tEl.value || '').trim();
+              var plain = (area.value || '').replace(/```[\s\S]*?```/g, ' ').replace(/!\[[^\]]*\]\([^)]*\)/g, ' ').replace(/[#>*_`~\[\]()!-]/g, ' ').replace(/\s+/g, ' ').trim();
+              var mSnip = plain.length > 18 ? plain.slice(-26).trim() : plain;
+              toast('✅ 발행됨! 빌드 반영을 확인하면 자동으로 글로 이동해요 (최대 4분)');
               var tries = 0;
               var poll = setInterval(function () {
                 tries++;
-                fetch(postUrl, { method: 'HEAD', cache: 'no-store' })
-                  .then(function (r) { if (r.ok) { clearInterval(poll); location.href = postUrl; } else if (tries >= 24) { clearInterval(poll); location.href = postUrl; } })
-                  .catch(function () { if (tries >= 24) { clearInterval(poll); location.href = postUrl; } });
+                fetch(postUrl + '?t=' + (1700000000000 + tries), { cache: 'no-store' })
+                  .then(function (r) { if (!r.ok) throw 0; return r.text(); })
+                  .then(function (html) {
+                    var ready = (!mTitle || html.indexOf(mTitle) > -1) && (!mSnip || html.indexOf(mSnip) > -1);
+                    if (ready || tries >= 30) { clearInterval(poll); location.href = postUrl; }
+                  })
+                  .catch(function () { if (tries >= 30) { clearInterval(poll); location.href = postUrl; } });
               }, 8000);
             })
             .catch(function (err) {

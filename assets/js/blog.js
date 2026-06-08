@@ -6,6 +6,8 @@
   'use strict';
 
   var POSTS = window.POSTS || [];
+  // 등록일(date) 내림차순 정렬 — "2026.06.08" 형식이라 문자열 비교로 정확히 정렬됨
+  POSTS.sort(function (a, b) { return (a.date < b.date) ? 1 : (a.date > b.date) ? -1 : 0; });
   var CAT_NODES = window.CAT_NODES || [];
   var SITE = window.SITE || { baseurl: '', profile: 'assets/img/me.jpg', defaultThumb: 'assets/img/me.jpg' };
   var BASE = SITE.baseurl || '';
@@ -116,7 +118,7 @@
         '<span class="tags">' + tags + '</span></div>' +
         '<h4>' + esc(p.title) + '</h4>' +
         '<p>' + esc(p.excerpt) + '</p>' +
-        '<div class="row-meta"><span>' + esc(p.date) + '</span><span class="dotsep">·</span><span>' + esc(p.read) + '</span></div>' +
+        '<div class="row-meta"><span>' + esc(p.date) + '</span></div>' +
       '</div>' + thumbHtml(p) + '</article>';
   }
 
@@ -128,7 +130,7 @@
         '<span class="kicker"><svg viewBox="0 0 576 512"><path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.6 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L421.2 329 535.3 217.6c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L373.1 150.3 316.9 18z"></path></svg> FEATURED</span>' +
         '<h2>' + esc(p.title) + '</h2>' +
         '<p>' + esc(p.excerpt) + '</p>' +
-        '<div class="meta"><span>' + esc(catLabel(p)) + '</span><span class="dotsep">·</span><span>' + esc(p.date) + '</span><span class="dotsep">·</span><span>' + esc(p.read) + '</span></div>' +
+        '<div class="meta"><span>' + esc(catLabel(p)) + '</span><span class="dotsep">·</span><span>' + esc(p.date) + '</span></div>' +
       '</div></article>';
   }
 

@@ -45,7 +45,7 @@
                         <img src="{{ site.profile_img | prepend: site.baseurl }}" alt="">
                         <div>
                             <div class="who">{{ site.author | default: "HUHGEON" }}</div>
-                            <div class="when">{{ post_date }} · {% assign w = page.content | number_of_words %}{{ w | divided_by: 200 | plus: 1 }}분 읽기</div>
+                            <div class="when">{{ post_date }}</div>
                         </div>
                         <div class="stats">
                             <span class="stat-views" hidden>views <span id="page-hits"{% if site.goatcounter_code %} data-gc="{{ site.goatcounter_code }}"{% endif %}>—</span></span>
