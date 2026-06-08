@@ -7,7 +7,7 @@
     {%- assign chk = cover | split: '/' -%}
     {%- if chk[0] == '' -%}{%- assign cover = cover | prepend: site.baseurl -%}{%- endif -%}
 {%- endif -%}
-{%- assign post_date = page.date | date: "%Y.%m.%d" -%}
+{%- assign post_date = page.date | date: "%Y.%m.%d %H:%M" -%}
 
 {% if is_doc %}
 <section class="view active doc-page" id="view-post">
@@ -45,7 +45,7 @@
                         <img src="{{ site.profile_img | prepend: site.baseurl }}" alt="">
                         <div>
                             <div class="who">{{ site.author | default: "HUHGEON" }}</div>
-                            <div class="when">{{ post_date }}{% if page.updated %} · 수정 {{ page.updated | date: "%Y.%m.%d" }}{% endif %}</div>
+                            <div class="when">{{ post_date }}{% if page.updated %} · 수정 {{ page.updated | date: "%Y.%m.%d %H:%M" }}{% endif %}</div>
                         </div>
                         <div class="stats">
                             <span class="stat-views" hidden>views <span id="page-hits"{% if site.goatcounter_code %} data-gc="{{ site.goatcounter_code }}"{% endif %}>—</span></span>

@@ -22,7 +22,7 @@ window.POSTS = [
     {%- endif -%}
     {%- assign words = p.content | number_of_words -%}
     {%- assign mins = words | divided_by: 200 | plus: 1 -%}
-    {%- assign datestr = p.date | date: "%Y.%m.%d" -%}
+    {%- assign datestr = p.date | date: "%Y.%m.%d %H:%M" -%}
     {
       "title": {{ p.title | jsonify }},
       "url": {{ p.url | prepend: site.baseurl | jsonify }},

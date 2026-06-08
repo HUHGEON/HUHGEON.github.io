@@ -85,6 +85,13 @@
     var p = function (n) { return (n < 10 ? '0' : '') + n; };
     return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
   }
+  function nowStamp() {   // "YYYY-MM-DD HH:MM:SS +0900" (브라우저 실제 시간대)
+    var d = new Date();
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    var off = -d.getTimezoneOffset(), sign = off >= 0 ? '+' : '-'; off = Math.abs(off);
+    var tz = sign + p(Math.floor(off / 60)) + p(off % 60);
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()) + ' ' + tz;
+  }
 
   /* ---------- view switching (#write / #manage) ---------- */
   function showView(v) {
@@ -237,6 +244,26 @@
         });
     }
     window.__ghPutFile = githubPutFile; window.__ghConf = ghConf; window.__ghToken = ghToken;
+
+    // 커밋 SHA의 Actions 배포가 끝나면 글로 이동 (새 글·수정 모두 정확)
+    function pollDeploy(sha, postUrl) {
+      var conf = ghConf(), token = ghToken();
+      if (!sha || !conf.repo || !token) { setTimeout(function () { location.href = postUrl; }, 90000); return; }
+      var tries = 0;
+      var poll = setInterval(function () {
+        tries++;
+        fetch('https://api.github.com/repos/' + conf.repo + '/actions/runs?head_sha=' + sha + '&per_page=1',
+          { headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' } })
+          .then(function (r) { return r.json(); })
+          .then(function (j) {
+            var run = j && j.workflow_runs && j.workflow_runs[0];
+            if (run && run.status === 'completed') { clearInterval(poll); setTimeout(function () { location.href = postUrl + '?t=' + Date.now(); }, 4000); }
+            else if (tries >= 40) { clearInterval(poll); location.href = postUrl; }
+          })
+          .catch(function () { if (tries >= 40) { clearInterval(poll); location.href = postUrl; } });
+      }, 6000);
+    }
+    window.__pollDeploy = pollDeploy;
 
     /* ---------- 에디터 비우기 / 수정 글 불러오기 ---------- */
     var edRender = function () {};
@@ -405,10 +432,10 @@
       function buildDoc() {
         var title = (tEl.value || '').trim() || '제목 없음';
         var tags = (gEl.value || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-        // 수정이면 최초 등록일 유지, 새 글이면 오늘
-        var dateStr = (editingUrl && editingDate) ? editingDate.replace(/\./g, '-') : today();
+        // 수정이면 최초 등록일 유지, 새 글이면 현재 시각(시:분:초)
+        var dateStr = (editingUrl && editingDate) ? editingDate.replace(/\./g, '-') : nowStamp();
         var fm = ['---', 'title: "' + title.replace(/"/g, '\\"') + '"', 'date: "' + dateStr + '"'];
-        if (editingUrl) fm.push('updated: "' + today() + '"');   // 수정일 기록(정렬엔 미사용)
+        if (editingUrl) fm.push('updated: "' + nowStamp() + '"');   // 수정일 기록(정렬엔 미사용)
         if (tags.length) { fm.push('tags:'); tags.forEach(function (t) { fm.push('    - ' + t); }); }
         // 썸네일은 자동 설정하지 않음 (본문 이미지가 커버로 중복되지 않게)
         fm.push('---', '');
@@ -443,22 +470,9 @@
             .then(function (res) {
               localStorage.removeItem('hg-edit');
               var postUrl = editingUrl || pathToUrl(path);
-              // 배포된 페이지에 "새 제목 + 본문 끝 일부"가 실제로 반영됐는지 확인하고 이동
-              var mTitle = (tEl.value || '').trim();
-              var plain = (area.value || '').replace(/```[\s\S]*?```/g, ' ').replace(/!\[[^\]]*\]\([^)]*\)/g, ' ').replace(/[#>*_`~\[\]()!-]/g, ' ').replace(/\s+/g, ' ').trim();
-              var mSnip = plain.length > 18 ? plain.slice(-26).trim() : plain;
-              toast('✅ 발행됨! 빌드 반영을 확인하면 자동으로 글로 이동해요 (최대 4분)');
-              var tries = 0;
-              var poll = setInterval(function () {
-                tries++;
-                fetch(postUrl + '?t=' + (1700000000000 + tries), { cache: 'no-store' })
-                  .then(function (r) { if (!r.ok) throw 0; return r.text(); })
-                  .then(function (html) {
-                    var ready = (!mTitle || html.indexOf(mTitle) > -1) && (!mSnip || html.indexOf(mSnip) > -1);
-                    if (ready || tries >= 30) { clearInterval(poll); location.href = postUrl; }
-                  })
-                  .catch(function () { if (tries >= 30) { clearInterval(poll); location.href = postUrl; } });
-              }, 8000);
+              var sha = (res && res.commit && res.commit.sha) || '';
+              toast('✅ 커밋 완료! 배포되면 자동으로 글로 이동해요 (보통 1~2분)');
+              pollDeploy(sha, postUrl);
             })
             .catch(function (err) {
               toast('푸시 실패(' + err.message + ') — .md 파일로 대신 받을게요');

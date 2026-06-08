@@ -40,6 +40,9 @@ baseurl:
 # 사이트 주소 (검색엔진 노출/sitemap/SEO에 필수)
 url: "https://huhgeon.github.io"
 
+# 날짜/시간 표시 기준 시간대
+timezone: Asia/Seoul
+
 # Build settings
 plugins:
   - jekyll-sitemap
