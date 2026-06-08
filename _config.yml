@@ -6,7 +6,7 @@ profile_img: "/assets/img/me.jpg"
 # 작성자(오너) 정보 — byline / 댓글 본인 아바타 등에 사용
 author: HUHGEON
 prompt_user: huhgeon          # 사이드바 터미널 프롬프트 huhgeon@blog:~$
-default_thumbnail: "/assets/img/me.jpg"   # 썸네일 없을 때 기본 이미지
+default_thumbnail: "/assets/img/default-thumb.jpg"   # 썸네일 없을 때 기본 이미지
 
 # 글쓰기 에디터(admin) → GitHub 자동 커밋/푸시 대상
 github_repo: "HUHGEON/HUHGEON.github.io"
