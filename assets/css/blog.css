@@ -921,10 +921,11 @@ body.editing .topbar { display: none; }
 /* ============================================================
    반응형 보강 — 가로 넘침 제거 + 좁은 폭 최적화
    ============================================================ */
-/* 어떤 경우에도 가로 스크롤이 생기지 않도록 */
-html, body { overflow-x: hidden; max-width: 100%; }
-.app { width: 100%; }
-.main, .content, .view, #home-content { min-width: 0; max-width: 100%; }
+/* 가로 넘침 방지 — overflow-x:hidden 은 sticky(사이드바/TOC)를 깨뜨리므로 쓰지 않고,
+   대신 컨테이너에 min-width:0 / max-width 로 넘침을 막는다 */
+html, body { max-width: 100%; }
+.app { width: 100%; max-width: 100%; }
+.main, .content, .view, #home-content { min-width: 0; max-width: 100%; overflow-x: clip; }
 img, .cover, .hero, .row-thumb { max-width: 100%; }
 
 /* 행 상단(카테고리 + 태그)이 좁은 폭에서 줄바꿈되도록 */
