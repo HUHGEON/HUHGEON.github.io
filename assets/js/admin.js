@@ -423,7 +423,7 @@
             if (!nr || nr < 1) nr = 1;
             nc = Math.min(nc, 12); nr = Math.min(nr, 50);
             var emptyRow = '|', sep = '|';
-            for (var ci = 0; ci < nc; ci++) { emptyRow += '   |'; sep += ' --- |'; }
+            for (var ci = 0; ci < nc; ci++) { emptyRow += ' |'; sep += ' --- |'; }
             var out2 = '\n' + emptyRow + '\n' + sep + '\n';   // 헤더(빈칸) + 구분선
             for (var ri = 0; ri < nr; ri++) out2 += emptyRow + '\n';
             insertAtCursor(out2);

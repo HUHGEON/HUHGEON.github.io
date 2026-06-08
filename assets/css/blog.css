@@ -621,14 +621,26 @@ select.ed-input { cursor: pointer; }
 .ed-tagrow { flex: 1; min-width: 160px; }
 .ed-divider { height: 1px; background: var(--border-soft); margin: 14px 26px 0; }
 
-.ed-toolbar { display: flex; gap: 4px; padding: 10px 24px; flex-wrap: wrap; }
+.ed-toolbar { display: flex; gap: 5px; padding: 10px 24px; flex-wrap: wrap; }
 .ed-tool {
-  width: 34px; height: 30px; display: grid; place-items: center; border-radius: 8px;
-  color: var(--dim); font-family: var(--mono); font-size: 13px; font-weight: 700; transition: all .15s;
+  position: relative;
+  width: 34px; height: 31px; display: grid; place-items: center; border-radius: 8px;
+  color: var(--text); font-family: var(--mono); font-size: 13px; font-weight: 700; transition: all .13s;
+  border: 1px solid var(--border); background: var(--card-2);
 }
-.ed-tool:hover { background: var(--card); color: var(--accent); }
+.ed-tool:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-line); }
 .ed-tool svg { width: 15px; height: 15px; fill: currentColor; }
 .ed-tool .u { text-decoration: underline; }
+/* 호버 시 기능 이름 툴팁 */
+.ed-tool::after {
+  content: attr(data-tip);
+  position: absolute; top: calc(100% + 7px); left: 50%; transform: translateX(-50%);
+  background: var(--card-2); color: var(--text); border: 1px solid var(--border);
+  padding: 5px 9px; border-radius: 7px; font-family: var(--sans); font-weight: 500;
+  font-size: 11px; white-space: nowrap; opacity: 0; pointer-events: none;
+  transition: opacity .12s ease; z-index: 40; box-shadow: var(--shadow);
+}
+.ed-tool:hover::after { opacity: 1; }
 
 .ed-area {
   flex: 1; width: 100%; resize: none; border: none; background: none;
