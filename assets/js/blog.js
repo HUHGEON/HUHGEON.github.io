@@ -41,8 +41,8 @@
         .then(function (r) { return r.json(); })
         .then(function (u) {
           if (a.ownerLogin && u.login !== a.ownerLogin) {
-            showToast('이 블로그 관리자는 @' + a.ownerLogin + ' 뿐이에요. 방문자는 로그인 없이 읽고 댓글을 달 수 있어요.');
-            return;   // 오너가 아니면 세션 저장 안 함
+            showToast('상단 로그인은 관리자(@' + a.ownerLogin + ') 전용이에요. 댓글은 글 맨 아래 댓글창에서 GitHub로 로그인해 자유롭게 남기실 수 있어요!');
+            return;   // 오너가 아니면 관리자 세션 저장 안 함 (댓글은 giscus가 별도 처리)
           }
           localStorage.setItem('hg-gh-token', d.token); localStorage.setItem('hg-gh-user', u.login); location.reload();
         })
