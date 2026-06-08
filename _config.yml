@@ -30,7 +30,7 @@ giscus_repo: "HUHGEON/HUHGEON.github.io"
 giscus_repoId: "R_kgDOSz8b8A"
 giscus_category: "Announcements"
 giscus_categoryId: "DIC_kwDOSz8b8M4C-vfV"
-goatcounter_code: huhgeon
+goatcounter_code:
 google_analytics:
 
 # If your repo name follows the format "<user-name>.github.io", then leave the below blank.
