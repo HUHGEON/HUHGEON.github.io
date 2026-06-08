@@ -70,18 +70,33 @@ export default {
       return new Response(JSON.stringify({ count }), { headers: cors });
     }
 
-    // ③ 좋아요: GET=조회, POST=±1 (op=inc|dec)
+    // ③ 좋아요: 로그인한 사람만, 사람당 1번(토글). GET=개수, POST=내 좋아요 토글
     if (url.pathname === '/like') {
-      if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
+      const cors2 = Object.assign({}, cors, { 'Access-Control-Allow-Headers': 'Authorization,Content-Type' });
+      if (request.method === 'OPTIONS') return new Response(null, { headers: cors2 });
+      if (!env.VIEWS) return new Response(JSON.stringify({ count: null, error: 'no-store' }), { headers: cors2 });
       const p = (url.searchParams.get('path') || '/').slice(0, 300);
-      const op = url.searchParams.get('op') === 'dec' ? 'dec' : 'inc';
-      if (env.COUNTER) {
-        const count = await doCount(env, 'l:' + p, request.method === 'POST' ? op : 'get');
-        return new Response(JSON.stringify({ count }), { headers: cors });
+      const key = 'lk:' + p;
+      let likers; try { likers = JSON.parse((await env.VIEWS.get(key)) || '[]'); } catch (e) { likers = []; }
+
+      if (request.method === 'GET') {
+        return new Response(JSON.stringify({ count: likers.length }), { headers: cors2 });
       }
-      if (!env.VIEWS) return new Response(JSON.stringify({ count: null, error: 'no-store' }), { headers: cors });
-      const count = await kvCount(env, 'l:' + p, request.method === 'POST' ? (op === 'dec' ? -1 : 1) : 0);
-      return new Response(JSON.stringify({ count }), { headers: cors });
+      if (request.method === 'POST') {
+        const token = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '').trim();
+        if (!token) return new Response(JSON.stringify({ error: 'no-auth', message: '좋아요는 로그인이 필요해요' }), { headers: cors2, status: 401 });
+        let user;
+        try {
+          const ur = await fetch('https://api.github.com/user', { headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'User-Agent': 'hg-blog' } });
+          if (!ur.ok) throw 0; user = await ur.json();
+        } catch (e) { return new Response(JSON.stringify({ error: 'bad-auth' }), { headers: cors2, status: 401 }); }
+        const i = likers.indexOf(user.login);
+        let liked;
+        if (i >= 0) { likers.splice(i, 1); liked = false; } else { likers.push(user.login); liked = true; }
+        await env.VIEWS.put(key, JSON.stringify(likers));
+        return new Response(JSON.stringify({ count: likers.length, liked }), { headers: cors2 });
+      }
+      return new Response(JSON.stringify({ error: 'method' }), { headers: cors2, status: 405 });
     }
 
     // ④ 댓글: GET 목록 / POST 작성 / PUT 수정 / DELETE 삭제 (KV 저장)

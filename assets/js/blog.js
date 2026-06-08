@@ -487,11 +487,11 @@
     /* like */
     var likeBtn = $('#like-btn');
     if (likeBtn) {
-      var key = likeBtn.getAttribute('data-likekey') || 'hg-like';
+      var lkey = 'hg-liked:' + location.pathname;   // 내가 눌렀는지(UI 상태)
       var likeCount = $('#like-count'), byl = $('#byline-likes');
       var likeOu = ((window.AUTH || {}).oauthUrl || '').replace(/\/$/, '');
-      var liked = localStorage.getItem(key) === '1';
-      var serverCount = null;   // 워커 KV 총 좋아요 수(있으면)
+      var liked = localStorage.getItem(lkey) === '1';
+      var serverCount = null;
       function paintLike() {
         likeBtn.classList.toggle('on', liked);
         likeBtn.setAttribute('aria-pressed', liked ? 'true' : 'false');
@@ -508,21 +508,18 @@
       }
       var likeBusy = false;
       likeBtn.addEventListener('click', function () {
-        if (likeBusy) return;              // 요청 진행 중이면 연타 무시
-        liked = !liked;
-        localStorage.setItem(key, liked ? '1' : '0');
-        if (likeOu) {
-          if (serverCount != null) serverCount = Math.max(0, serverCount + (liked ? 1 : -1));
-          paintLike();
-          likeBusy = true; likeBtn.classList.add('busy');
-          fetch(likeOu + '/like?path=' + encodeURIComponent(location.pathname) + '&op=' + (liked ? 'inc' : 'dec'), { method: 'POST' })
-            .then(function (r) { return r.json(); })
-            .then(function (j) { if (j && j.count != null) { serverCount = j.count; paintLike(); } })
-            .catch(function () {})
-            .then(function () { likeBusy = false; likeBtn.classList.remove('busy'); });
-        } else {
-          paintLike();   // 워커 없으면 로컬 토글(0/1)
-        }
+        if (likeBusy) return;
+        if (!likeOu) { liked = !liked; localStorage.setItem(lkey, liked ? '1' : '0'); paintLike(); return; }
+        if (!isLoggedIn()) { showToast('좋아요는 로그인 후에 누를 수 있어요'); loginGitHub(); return; }
+        likeBusy = true; likeBtn.classList.add('busy');
+        fetch(likeOu + '/like?path=' + encodeURIComponent(location.pathname), { method: 'POST', headers: { 'Authorization': 'Bearer ' + ghToken() } })
+          .then(function (r) { return r.json(); })
+          .then(function (j) {
+            if (j && j.count != null) { serverCount = j.count; liked = !!j.liked; localStorage.setItem(lkey, liked ? '1' : '0'); paintLike(); }
+            else if (j && j.error) showToast('좋아요 실패: ' + (j.message || j.error));
+          })
+          .catch(function () {})
+          .then(function () { likeBusy = false; likeBtn.classList.remove('busy'); });
       });
     }
 
