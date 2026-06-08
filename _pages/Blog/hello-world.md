@@ -3,7 +3,6 @@ title: "HUHGEON's Blog"
 date: "2026-06-08 00:00"
 updated: "2026-06-09 01:04:29 +0900"
 tags:
-    - 일상
     - 시작
 ---
 <h2 id="hi-there-">Hi there 👋</h2>
