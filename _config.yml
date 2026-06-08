@@ -24,11 +24,10 @@ google_analytics:
 baseurl:
 
 # 사이트 주소 (검색엔진 노출/sitemap/SEO에 필수)
-url: "https://HUHGEON.github.io"
+url: "https://huhgeon.github.io"
 
 # Build settings
 plugins:
-  - jekyll-feed
   - jekyll-sitemap
   - jekyll-seo-tag
   - jekyll-loading-lazy
