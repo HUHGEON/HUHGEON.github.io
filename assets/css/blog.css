@@ -1267,3 +1267,7 @@ body.owner .sb-login { display: none; }
 .cat-readme { margin-left: auto; display: flex; flex-direction: column; text-align: left; font-family: var(--mono); font-size: 13px; line-height: 1.6; color: var(--dim); }
 .cat-readme .rl-d { color: var(--accent); }
 .cat-readme .rl-h { color: var(--c-cat); }
+
+/* 글쓰기 카테고리 2단계 select */
+.ed-catsel { min-width: 128px; max-width: 220px; }
+.ed-catsel:disabled { opacity: .5; cursor: not-allowed; }

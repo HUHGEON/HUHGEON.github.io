@@ -367,13 +367,12 @@
       if (t) t.value = raw.title || '';
       if (g) g.value = raw.tags || '';
       if (a) a.value = raw.body || '';
-      // 카테고리 select 값 맞추기 ("Cat · Sub" 형식) — manage.js 렌더 이후 보장
+      // 카테고리 부모/세부 select 값 맞추기 — manage.js 렌더 이후 보장
       if (c) {
-        var want = (raw.cat || '') + (raw.sub ? ' · ' + raw.sub : '');
         var set = function () {
-          var found = false;
-          Array.prototype.forEach.call(c.options, function (o) { if (o.value === want || o.textContent.trim() === want) { c.value = o.value; found = true; } });
-          if (!found && raw.cat) { Array.prototype.forEach.call(c.options, function (o) { if (o.textContent.indexOf(raw.cat) === 0) c.value = o.value; }); }
+          if (raw.cat) c.value = raw.cat;
+          if (window.__fillSubcat) window.__fillSubcat(c.value, raw.sub || '');   // 부모의 자식 목록 채우고 세부 선택
+          var subEl = $('#ed-subcat'); if (subEl) subEl.value = raw.sub || '';
           edRender();
         };
         set(); setTimeout(set, 60);
@@ -400,7 +399,8 @@
         if (prev.querySelector('.mermaid')) scheduleMermaid();   // mermaid 다이어그램 렌더(디바운스)
         var title = (tEl.value || '').trim();
         pvTitle.textContent = title || '제목 없음';
-        pvCat.textContent = cEl.value || 'Uncategorized';
+        var subElP = $('#ed-subcat'); var subvP = (subElP && subElP.value) || '';
+        pvCat.textContent = (cEl.value || 'Uncategorized') + (subvP ? ' · ' + subvP : '');
         var tags = (gEl.value || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
         pvTags.innerHTML = tags.map(function (t) { return '<span class="tag">' + t + '</span>'; }).join('');
         var fn = $('#ed-file');
@@ -410,7 +410,10 @@
         }
       }
       edRender = render;
-      [area, tEl, cEl, gEl].forEach(function (el) { if (el) el.addEventListener('input', render); });
+      var subEl0 = $('#ed-subcat');
+      [area, tEl, cEl, gEl, subEl0].forEach(function (el) { if (el) el.addEventListener('input', render); });
+      if (subEl0) subEl0.addEventListener('change', render);
+      if (cEl) cEl.addEventListener('change', render);
 
       function wrap(before, after, ph) {
         var s = area.selectionStart, e = area.selectionEnd;
@@ -539,9 +542,10 @@
         return { title: title, content: fm.join('\n') + area.value + '\n', slug: slug };
       }
       function catFolder() {
-        var v = (cEl && cEl.value || '').trim();
-        if (!v) return 'Blog';
-        return v.split(/\s*·\s*/).join('/');   // "Cat · Sub" → "Cat/Sub"
+        var cat = (cEl && cEl.value || '').trim();
+        var subEl = $('#ed-subcat'); var sub = (subEl && subEl.value || '').trim();
+        if (!cat) return 'Blog';
+        return sub ? (cat + '/' + sub) : cat;   // 세부 선택 시 부모/세부, 아니면 부모만
       }
       function pathToUrl(mdPath) {   // _pages/A/B/file.md → /A/B/file.html (URL 인코딩)
         var u = mdPath.replace(/^_pages\//, '').replace(/\.md$/, '.html');
@@ -556,19 +560,28 @@
       var pub = $('#ed-publish');
       if (pub) pub.addEventListener('click', function () {
         var doc = buildDoc();
-        var path = editingUrl ? urlToPath(editingUrl) : ('_pages/' + catFolder() + '/' + today() + '-' + doc.slug + '.md');
-        var fname = path.split('/').pop();
+        var oldPath = editingUrl ? urlToPath(editingUrl) : '';
+        var fname = oldPath ? oldPath.split('/').pop() : (today() + '-' + doc.slug + '.md');
+        var path = '_pages/' + catFolder() + '/' + fname;
+        var moved = !!editingUrl && oldPath !== path;   // 수정 중 카테고리 바꿈 → 글 이동
         var conf = ghConf(), token = ghToken();
         if (token && conf.repo) {
           pub.disabled = true;
-          showPub('커밋 중…', 'GitHub에 글을 올리고 있어요');
+          showPub('커밋 중…', moved ? '카테고리 이동 중…' : 'GitHub에 글을 올리고 있어요');
           githubPutFile(conf, token, path, doc.content, (editingUrl ? 'edit: ' : 'post: ') + doc.title)
             .then(function (res) {
               localStorage.removeItem('hg-edit');
-              var postUrl = editingUrl || pathToUrl(path);
               var sha = (res && res.commit && res.commit.sha) || '';
-              updatePub('배포 중…', '빌드되면 자동으로 글로 이동해요 (보통 1~2분)');
-              pollDeploy(sha, postUrl);
+              var done = function () {
+                updatePub('배포 중…', '빌드되면 자동으로 글로 이동해요 (보통 1~2분)');
+                pollDeploy(sha, pathToUrl(path));
+              };
+              if (moved) {   // 옛 위치 파일 삭제(이동 완성)
+                window.__ghGetFile(conf, token, oldPath)
+                  .then(function (g) { return window.__ghDeleteFile(conf, token, oldPath, g.sha, 'move post: ' + oldPath + ' → ' + path); })
+                  .then(function (r) { if (r && r.commit && r.commit.sha) sha = r.commit.sha; done(); })
+                  .catch(function () { done(); });   // 삭제 실패해도 새 위치엔 저장됨
+              } else done();
             })
             .catch(function (err) {
               hidePub();
