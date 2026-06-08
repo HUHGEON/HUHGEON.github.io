@@ -3,14 +3,16 @@
  *   ① GitHub OAuth 로그인 브로커 (/auth, /callback)
  *   ② 조회수 카운터 (/views)  — 글별 + 총합
  *   ③ 좋아요 카운터 (/like)   — GET 조회 / POST ±1
+ *   ④ 댓글 (/comments)        — GET/POST/PUT/DELETE, KV 저장
  *
  * 카운터 저장:
- *   - Durable Object `COUNTER` 가 바인딩돼 있으면 그걸로 (동시성 100% 안전, 권장)
- *   - 없으면 KV `VIEWS` 로 폴백 (간단, 동시 요청엔 근사치)
+ *   - Durable Object `COUNTER` 가 바인딩돼 있으면 그걸로 (동시성 100% 안전, 유료플랜)
+ *   - 없으면 KV `VIEWS` 로 폴백 (무료, 댓글도 이 KV에 저장됨)
  *
  * 설정값:
  *   GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET (시크릿)
  *   ALLOWED_ORIGIN  (예: https://huhgeon.github.io)
+ *   OWNER_LOGIN     (예: HUHGEON) — 이 사람은 모든 댓글 삭제 가능(관리자)
  * 바인딩(선택):
  *   Durable Object: 변수 COUNTER / 클래스 Counter   ← 동시성 안전(권장)
  *   KV namespace : 변수 VIEWS                       ← 폴백
@@ -80,6 +82,69 @@ export default {
       if (!env.VIEWS) return new Response(JSON.stringify({ count: null, error: 'no-store' }), { headers: cors });
       const count = await kvCount(env, 'l:' + p, request.method === 'POST' ? (op === 'dec' ? -1 : 1) : 0);
       return new Response(JSON.stringify({ count }), { headers: cors });
+    }
+
+    // ④ 댓글: GET 목록 / POST 작성 / PUT 수정 / DELETE 삭제 (KV 저장)
+    if (url.pathname === '/comments') {
+      const cors2 = Object.assign({}, cors, {
+        'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+        'Access-Control-Allow-Headers': 'Authorization,Content-Type',
+      });
+      if (request.method === 'OPTIONS') return new Response(null, { headers: cors2 });
+      if (!env.VIEWS) return new Response(JSON.stringify({ error: 'no-store' }), { headers: cors2, status: 200 });
+      const p = (url.searchParams.get('path') || '/').slice(0, 300);
+      const key = 'c:' + p;
+      const load = async () => { try { return JSON.parse((await env.VIEWS.get(key)) || '[]'); } catch (e) { return []; } };
+
+      if (request.method === 'GET') {
+        return new Response(JSON.stringify({ comments: await load() }), { headers: cors2 });
+      }
+
+      // 쓰기 작업은 GitHub 로그인 토큰 필요 → 토큰으로 실제 사용자 검증(위조 방지)
+      const token = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '').trim();
+      if (!token) return new Response(JSON.stringify({ error: 'no-auth' }), { headers: cors2, status: 401 });
+      let user;
+      try {
+        const ur = await fetch('https://api.github.com/user', { headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'User-Agent': 'hg-blog' } });
+        if (!ur.ok) throw 0;
+        user = await ur.json();
+      } catch (e) { return new Response(JSON.stringify({ error: 'bad-auth' }), { headers: cors2, status: 401 }); }
+      const isOwner = (user.login || '').toLowerCase() === (env.OWNER_LOGIN || '').toLowerCase();
+      let list = await load();
+
+      if (request.method === 'POST') {
+        let b = {}; try { b = await request.json(); } catch (e) {}
+        const text = (b.body || '').toString().trim().slice(0, 4000);
+        if (!text) return new Response(JSON.stringify({ error: 'empty' }), { headers: cors2, status: 400 });
+        const topCount = list.filter((c) => !c.parent).length;
+        if (!b.parent && topCount >= 5) return new Response(JSON.stringify({ error: 'limit', message: '이 글은 댓글 5개까지만 남길 수 있어요' }), { headers: cors2, status: 403 });
+        const c = { id: crypto.randomUUID().slice(0, 8), login: user.login, name: user.name || user.login, avatar: user.avatar_url, body: text, ts: Date.now(), parent: b.parent || null };
+        list.push(c);
+        await env.VIEWS.put(key, JSON.stringify(list));
+        return new Response(JSON.stringify({ comment: c }), { headers: cors2 });
+      }
+      if (request.method === 'PUT') {
+        const id = url.searchParams.get('id');
+        let b = {}; try { b = await request.json(); } catch (e) {}
+        const text = (b.body || '').toString().trim().slice(0, 4000);
+        const c = list.find((x) => x.id === id);
+        if (!c) return new Response(JSON.stringify({ error: 'not-found' }), { headers: cors2, status: 404 });
+        if (c.login !== user.login) return new Response(JSON.stringify({ error: 'forbidden', message: '본인 댓글만 수정할 수 있어요' }), { headers: cors2, status: 403 });
+        if (!text) return new Response(JSON.stringify({ error: 'empty' }), { headers: cors2, status: 400 });
+        c.body = text; c.edited = true;
+        await env.VIEWS.put(key, JSON.stringify(list));
+        return new Response(JSON.stringify({ comment: c }), { headers: cors2 });
+      }
+      if (request.method === 'DELETE') {
+        const id = url.searchParams.get('id');
+        const c = list.find((x) => x.id === id);
+        if (!c) return new Response(JSON.stringify({ error: 'not-found' }), { headers: cors2, status: 404 });
+        if (c.login !== user.login && !isOwner) return new Response(JSON.stringify({ error: 'forbidden', message: '본인 댓글이나 관리자만 삭제할 수 있어요' }), { headers: cors2, status: 403 });
+        list = list.filter((x) => x.id !== id && x.parent !== id);   // 댓글 + 그 답글들 삭제
+        await env.VIEWS.put(key, JSON.stringify(list));
+        return new Response(JSON.stringify({ ok: true }), { headers: cors2 });
+      }
+      return new Response(JSON.stringify({ error: 'method' }), { headers: cors2, status: 405 });
     }
 
     // ① 로그인 시작 → GitHub 인증

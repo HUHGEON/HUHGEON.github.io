@@ -40,10 +40,7 @@
       fetch('https://api.github.com/user', { headers: { 'Authorization': 'Bearer ' + d.token, 'Accept': 'application/vnd.github+json' } })
         .then(function (r) { return r.json(); })
         .then(function (u) {
-          if (a.ownerLogin && u.login !== a.ownerLogin) {
-            showToast('상단 로그인은 관리자(@' + a.ownerLogin + ') 전용이에요. 댓글은 글 맨 아래 댓글창에서 GitHub로 로그인해 자유롭게 남기실 수 있어요!');
-            return;   // 오너가 아니면 관리자 세션 저장 안 함 (댓글은 giscus가 별도 처리)
-          }
+          // 누구나 로그인 저장 → 댓글 작성 가능. 오너(저장소 주인)면 관리자 기능까지 자동 부여.
           localStorage.setItem('hg-gh-token', d.token); localStorage.setItem('hg-gh-user', u.login); location.reload();
         })
         .catch(function (err) { showToast('로그인 실패: ' + err.message); });
@@ -72,30 +69,20 @@
     if (c) { c.scrollIntoView({ behavior: 'smooth' }); showToast('댓글창에서 GitHub로 로그인하면 댓글을 남길 수 있어요'); }
     else { showToast('글을 열면 맨 아래 댓글창에서 GitHub로 로그인해 댓글을 남길 수 있어요'); }
   }
-  function openLoginModal() { var m = $('#login-modal'); if (m) m.hidden = false; }
-  function closeLoginModal() { var m = $('#login-modal'); if (m) m.hidden = true; }
-  function bindLoginModal() {
-    var m = $('#login-modal'); if (!m) return;
-    m.addEventListener('click', function (e) {
-      if (e.target === m || e.target.closest('[data-close]')) { closeLoginModal(); return; }
-      var opt = e.target.closest('[data-auth]'); if (!opt) return;
-      closeLoginModal();
-      if (opt.getAttribute('data-auth') === 'admin') loginGitHub(); else goToComments();
-    });
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeLoginModal(); });
-  }
+  function isLoggedIn() { return !!ghToken() && !!ghUser(); }
   function renderAuthBtn() {
     var wrap = $('#tb-auth-wrap'), b = $('#tb-auth'); if (!b) return;
-    if (isOwnerLoggedIn()) {
-      b.innerHTML = GH_ICON + '<span>로그아웃</span>';
-      b.title = '@' + ghUser() + ' · 로그아웃';
+    if (isLoggedIn()) {
+      var label = isOwnerLoggedIn() ? '로그아웃' : '로그아웃';
+      b.innerHTML = GH_ICON + '<span>' + label + '</span>';
+      b.title = '@' + ghUser() + (isOwnerLoggedIn() ? ' (관리자)' : '') + ' · 로그아웃';
       b.classList.add('on');
       b.onclick = logoutGitHub;
     } else {
-      b.innerHTML = GH_ICON + '<span>로그인</span>';
-      b.title = '로그인';
+      b.innerHTML = GH_ICON + '<span>GitHub 로그인</span>';
+      b.title = 'GitHub로 로그인 (글쓰기·댓글)';
       b.classList.remove('on');
-      b.onclick = openLoginModal;
+      b.onclick = loginGitHub;
     }
     if (wrap) wrap.hidden = false;
   }
@@ -602,43 +589,119 @@
       viewsWrap.hidden = true;
     }
 
-    /* giscus */
-    initGiscus();
+    /* 댓글 (커스텀, 워커 KV) */
+    initComments();
   }
 
-  function giscusTheme() { return document.body.classList.contains('light') ? 'light' : 'noborder_gray'; }
-  function initGiscus() {
-    var box = $('#giscus'); if (!box) return;
-    var repo = (document.querySelector('meta[name="giscus_repo"]') || {}).content;
-    var repoId = (document.querySelector('meta[name="giscus_repoId"]') || {}).content;
-    var category = (document.querySelector('meta[name="giscus_category"]') || {}).content;
-    var categoryId = (document.querySelector('meta[name="giscus_categoryId"]') || {}).content;
-    if (!repo || !repoId) {
-      box.innerHTML = '<div class="giscus-note">댓글(giscus)을 사용하려면 <code>_config.yml</code>에 giscus 저장소 정보를 입력하세요. (docs/Comment System.md 참고)</div>';
-      return;
+  /* ============================================================
+     댓글 — 통합 로그인(GitHub) 기반, 워커 KV 저장
+     본인=수정/삭제, 관리자=전체 삭제, 글당 최대 5개
+     ============================================================ */
+  function relTime(ts) {
+    var s = Math.floor((Date.now() - ts) / 1000);
+    if (s < 60) return '방금';
+    var m = Math.floor(s / 60); if (m < 60) return m + '분 전';
+    var h = Math.floor(m / 60); if (h < 24) return h + '시간 전';
+    var d = Math.floor(h / 24); if (d < 7) return d + '일 전';
+    var dt = new Date(ts); return dt.getFullYear() + '.' + (dt.getMonth() + 1) + '.' + dt.getDate();
+  }
+  function initComments() {
+    var root = $('#comments'); if (!root) return;
+    var ou = ((window.AUTH || {}).oauthUrl || '').replace(/\/$/, '');
+    if (!ou) { var compose0 = $('#comment-compose'); if (compose0) compose0.innerHTML = '<div class="giscus-note">댓글 기능을 쓰려면 <code>_config.yml</code>의 <code>oauth_url</code>(워커)이 필요해요.</div>'; return; }
+    var path = encodeURIComponent(location.pathname);
+    var list = $('#comment-list'), compose = $('#comment-compose');
+
+    function me() { return ghUser(); }
+    function canEdit(c) { return me() && c.login === me(); }
+    function canDelete(c) { return me() && (c.login === me() || isOwnerLoggedIn()); }
+    function avatar(c) { return '<img class="c-avatar" src="' + escAttr(c.avatar || SITE.profile) + '" alt="">'; }
+    function acts(c) {
+      return (canEdit(c) ? '<button class="c-act" data-act="edit" data-id="' + c.id + '">수정</button>' : '') +
+             (canDelete(c) ? '<button class="c-act c-del" data-act="del" data-id="' + c.id + '">삭제</button>' : '');
     }
-    var s = document.createElement('script');
-    var attrs = {
-      src: 'https://giscus.app/client.js', 'data-repo': repo, 'data-repo-id': repoId,
-      'data-category': category, 'data-category-id': categoryId, 'data-mapping': 'pathname',
-      'data-reactions-enabled': '0', 'data-emit-metadata': '1', 'data-theme': giscusTheme(),
-      'data-lang': 'ko', crossorigin: 'anonymous', async: ''
-    };
-    Object.keys(attrs).forEach(function (k) { s.setAttribute(k, attrs[k]); });
-    box.appendChild(s);
-    window.addEventListener('message', function (event) {
-      if (event.origin !== 'https://giscus.app') return;
-      if (!(typeof event.data === 'object' && event.data.giscus)) return;
-      var g = event.data.giscus;
-      if (g && g.discussion) {
-        var c = g.discussion.totalCommentCount;
-        ['#comment-count', '#comment-count2', '#byline-comments'].forEach(function (sel) { var el = $(sel); if (el) el.textContent = c; });
+    function commentHtml(c, replies) {
+      return '<li class="comment" data-id="' + c.id + '">' + avatar(c) + '<div class="c-body">' +
+        '<div class="c-meta"><span class="c-name">' + esc(c.name) + '</span><span class="c-time">' + relTime(c.ts) + (c.edited ? ' · 수정됨' : '') + '</span>' +
+        '<span class="c-tools">' + acts(c) + '</span></div>' +
+        '<div class="c-text">' + esc(c.body) + '</div>' +
+        (me() ? '<div class="c-actions"><button class="c-reply" data-act="reply" data-id="' + c.id + '">답글</button></div>' : '') +
+        (replies.length ? '<ul class="reply-list">' + replies.map(replyHtml).join('') + '</ul>' : '') +
+        '</div></li>';
+    }
+    function replyHtml(r) {
+      return '<li class="comment reply" data-id="' + r.id + '">' + avatar(r) + '<div class="c-body">' +
+        '<div class="c-meta"><span class="c-name">' + esc(r.name) + '</span><span class="c-time">' + relTime(r.ts) + (r.edited ? ' · 수정됨' : '') + '</span>' +
+        '<span class="c-tools">' + acts(r) + '</span></div>' +
+        '<div class="c-text">' + esc(r.body) + '</div></div></li>';
+    }
+    function setCounts(n) { ['#comment-count', '#comment-count2', '#byline-comments'].forEach(function (s) { var el = $(s); if (el) el.textContent = n; }); }
+    function render(items) {
+      items = items || [];
+      setCounts(items.length);
+      var tops = items.filter(function (c) { return !c.parent; });
+      var byParent = {}; items.forEach(function (c) { if (c.parent) { (byParent[c.parent] = byParent[c.parent] || []).push(c); } });
+      list.innerHTML = tops.length
+        ? tops.map(function (c) { return commentHtml(c, byParent[c.id] || []); }).join('')
+        : '<li class="c-empty">아직 댓글이 없어요. 첫 댓글을 남겨보세요!</li>';
+      // compose: 로그인 상태에 따라 폼 or 로그인 버튼
+      if (compose) {
+        if (isLoggedIn()) {
+          var full = tops.length >= 5;
+          compose.innerHTML = full
+            ? '<div class="giscus-note">이 글은 댓글 5개가 다 찼어요. (답글은 남길 수 있어요)</div>'
+            : '<div class="comment-form"><textarea id="comment-input" placeholder="댓글을 남겨보세요" rows="3"></textarea><div class="comment-form-foot"><span class="cf-hint">@' + esc(me()) + ' 로 작성</span><button class="btn-primary" id="comment-submit">등록</button></div></div>';
+        } else {
+          compose.innerHTML = '<div class="comment-login"><span>로그인하면 댓글을 남길 수 있어요.</span><button class="btn-primary" id="comment-login-btn">GitHub 로그인</button></div>';
+        }
+      }
+    }
+
+    function authHeaders() { return { 'Authorization': 'Bearer ' + ghToken(), 'Content-Type': 'application/json' }; }
+    function handle(r) { return r.json().then(function (j) { if (j && j.error) throw (j.message || j.error); return j; }); }
+    function api(method, body, id) {
+      var u = ou + '/comments?path=' + path + (id ? '&id=' + id : '');
+      var opt = { method: method };
+      if (method !== 'GET') opt.headers = authHeaders();
+      if (body) opt.body = JSON.stringify(body);
+      return fetch(u, opt).then(handle);
+    }
+    function reload() { api('GET').then(function (j) { render(j.comments); }).catch(function () { render([]); }); }
+    reload();
+
+    root.addEventListener('click', function (e) {
+      var t = e.target;
+      if (t.id === 'comment-login-btn') { loginGitHub(); return; }
+      if (t.id === 'comment-submit') {
+        var inp = $('#comment-input'); var v = (inp && inp.value || '').trim(); if (!v) return;
+        t.disabled = true;
+        api('POST', { body: v }).then(function () { reload(); }).catch(function (m) { showToast(m); }).then(function () { t.disabled = false; });
+        return;
+      }
+      var btn = t.closest('[data-act]'); if (!btn) return;
+      var id = btn.getAttribute('data-id'), act = btn.getAttribute('data-act');
+      var li = btn.closest('.comment');
+      if (act === 'del') {
+        if (!confirm('이 댓글을 삭제할까요?')) return;
+        api('DELETE', null, id).then(reload).catch(showToast);
+      } else if (act === 'reply') {
+        if (li.querySelector('.c-compose')) return;
+        var box = document.createElement('div'); box.className = 'c-compose';
+        box.innerHTML = '<textarea placeholder="답글을 입력하세요" rows="2"></textarea><button class="btn-primary">등록</button>';
+        li.querySelector('.c-body').appendChild(box);
+        box.querySelector('textarea').focus();
+        box.querySelector('button').onclick = function () { var v = box.querySelector('textarea').value.trim(); if (!v) return; api('POST', { body: v, parent: id }).then(reload).catch(showToast); };
+      } else if (act === 'edit') {
+        var textEl = li.querySelector('.c-text'); if (li.querySelector('.c-compose')) return;
+        var old = textEl.textContent;
+        var ed = document.createElement('div'); ed.className = 'c-compose';
+        ed.innerHTML = '<textarea rows="3"></textarea><button class="btn-primary">수정</button>';
+        ed.querySelector('textarea').value = old;
+        textEl.style.display = 'none'; textEl.parentNode.insertBefore(ed, textEl.nextSibling);
+        ed.querySelector('textarea').focus();
+        ed.querySelector('button').onclick = function () { var v = ed.querySelector('textarea').value.trim(); if (!v) return; api('PUT', { body: v }, id).then(reload).catch(showToast); };
       }
     });
-  }
-  function syncGiscusTheme(theme) {
-    var iframe = document.querySelector('iframe.giscus-frame'); if (!iframe) return;
-    iframe.contentWindow.postMessage({ giscus: { setConfig: { theme: theme } } }, 'https://giscus.app');
   }
 
   /* ============================================================
@@ -649,7 +712,6 @@
     if (themeBtn) themeBtn.addEventListener('click', function () {
       var now = document.body.classList.contains('light') ? 'dark' : 'light';
       localStorage.setItem(TKEY, now); applyTheme(now);
-      syncGiscusTheme(giscusTheme());
     });
 
     var sb = $('#sidebar'), scrim = $('#scrim'), hamb = $('#hamb');
@@ -691,7 +753,6 @@
   ready(function () {
     renderSidebar();
     renderAuthBtn();
-    bindLoginModal();
     bindSidebar();
     bindGlobal();
     bindSearch();

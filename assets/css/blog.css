@@ -1075,3 +1075,30 @@ body.owner .sb-login { display: none; }
 .lm-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .lm-txt b { font-size: 14.5px; font-weight: 700; color: var(--text); }
 .lm-txt small { font-size: 12px; color: var(--dim); }
+
+/* ============================================================
+   커스텀 댓글 (워커 KV) — 수정/삭제/답글
+   ============================================================ */
+.comments-head .c-cap { font-family: var(--mono); font-size: 11.5px; color: var(--faint); font-weight: 400; margin-left: 4px; }
+.comment-login {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  border: 1px dashed var(--border); border-radius: 12px; padding: 16px 18px; margin-bottom: 14px;
+  font-size: 13.5px; color: var(--dim);
+}
+.comment-login .btn-primary { height: 36px; }
+.c-empty { list-style: none; padding: 22px; text-align: center; color: var(--faint); font-family: var(--mono); font-size: 13px; }
+.c-meta { display: flex; align-items: center; gap: 9px; }
+.c-tools { margin-left: auto; display: flex; gap: 4px; }
+.c-act {
+  font-family: var(--mono); font-size: 11px; color: var(--faint);
+  padding: 3px 8px; border-radius: 6px; transition: .12s;
+}
+.c-act:hover { background: var(--card); color: var(--accent); }
+.c-act.c-del:hover { color: var(--rose); }
+.c-compose { display: flex; gap: 8px; margin-top: 10px; align-items: flex-end; }
+.c-compose textarea {
+  flex: 1; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-2); color: var(--text);
+  font-family: var(--sans); font-size: 13.5px; line-height: 1.5; padding: 8px 10px; resize: vertical; min-height: 38px;
+}
+.c-compose textarea:focus { outline: none; border-color: var(--accent-line); }
+.c-compose .btn-primary { height: 36px; flex-shrink: 0; }

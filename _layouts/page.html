@@ -88,25 +88,6 @@
 
         {% include posts_data.html %}
 
-        <!-- 로그인 선택 모달 (관리자 / 일반) -->
-        <div class="login-modal" id="login-modal" hidden>
-            <div class="login-card">
-                <button class="lm-close" data-close aria-label="close">✕</button>
-                <h2>로그인</h2>
-                <p>어떤 용도로 로그인하시나요?</p>
-                <div class="lm-options">
-                    <button class="lm-opt" data-auth="admin">
-                        <span class="lm-ic">🔧</span>
-                        <span class="lm-txt"><b>관리자 로그인</b><small>글쓰기 · 발행 (블로그 주인 전용)</small></span>
-                    </button>
-                    <button class="lm-opt" data-auth="guest">
-                        <span class="lm-ic">💬</span>
-                        <span class="lm-txt"><b>일반 로그인</b><small>댓글 작성 (방문자)</small></span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <div class="toast" id="toast"><span class="dot"></span> <span id="toast-msg"></span></div>
 
         <script src="{{ '/assets/js/blog.js' | prepend: site.baseurl }}"></script>
