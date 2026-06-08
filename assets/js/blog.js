@@ -39,7 +39,13 @@
       if (d.error || !d.token) { showToast('로그인 실패: ' + (d.error || '토큰 없음')); return; }
       fetch('https://api.github.com/user', { headers: { 'Authorization': 'Bearer ' + d.token, 'Accept': 'application/vnd.github+json' } })
         .then(function (r) { return r.json(); })
-        .then(function (u) { localStorage.setItem('hg-gh-token', d.token); localStorage.setItem('hg-gh-user', u.login); location.reload(); })
+        .then(function (u) {
+          if (a.ownerLogin && u.login !== a.ownerLogin) {
+            showToast('이 블로그 관리자는 @' + a.ownerLogin + ' 뿐이에요. 방문자는 로그인 없이 읽고 댓글을 달 수 있어요.');
+            return;   // 오너가 아니면 세션 저장 안 함
+          }
+          localStorage.setItem('hg-gh-token', d.token); localStorage.setItem('hg-gh-user', u.login); location.reload();
+        })
         .catch(function (err) { showToast('로그인 실패: ' + err.message); });
     }
     window.addEventListener('message', onMsg);
