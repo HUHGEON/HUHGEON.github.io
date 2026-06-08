@@ -241,17 +241,19 @@
     /* ---------- 에디터 비우기 / 수정 글 불러오기 ---------- */
     var edRender = function () {};
     var editingUrl = '';
+    var editingDate = '';   // 수정 중인 글의 최초 등록일("2026.06.08")
     function clearEditor() {
       var t = $('#ed-title'), g = $('#ed-tags'), a = $('#ed-area'), c = $('#ed-cat');
       if (t) t.value = ''; if (g) g.value = ''; if (a) a.value = '';
       if (c && c.options.length) c.selectedIndex = 0;
-      editingUrl = '';
+      editingUrl = ''; editingDate = '';
       edRender();
     }
     function loadEditDraft() {
       var raw; try { raw = JSON.parse(localStorage.getItem('hg-edit')); } catch (e) {}
       if (!raw) return false;
       editingUrl = raw.url || '';
+      editingDate = raw.date || '';
       var t = $('#ed-title'), g = $('#ed-tags'), a = $('#ed-area'), c = $('#ed-cat');
       if (t) t.value = raw.title || '';
       if (g) g.value = raw.tags || '';
@@ -403,7 +405,10 @@
       function buildDoc() {
         var title = (tEl.value || '').trim() || '제목 없음';
         var tags = (gEl.value || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-        var fm = ['---', 'title: "' + title.replace(/"/g, '\\"') + '"', 'date: "' + today() + '"'];
+        // 수정이면 최초 등록일 유지, 새 글이면 오늘
+        var dateStr = (editingUrl && editingDate) ? editingDate.replace(/\./g, '-') : today();
+        var fm = ['---', 'title: "' + title.replace(/"/g, '\\"') + '"', 'date: "' + dateStr + '"'];
+        if (editingUrl) fm.push('updated: "' + today() + '"');   // 수정일 기록(정렬엔 미사용)
         if (tags.length) { fm.push('tags:'); tags.forEach(function (t) { fm.push('    - ' + t); }); }
         // 썸네일은 자동 설정하지 않음 (본문 이미지가 커버로 중복되지 않게)
         fm.push('---', '');

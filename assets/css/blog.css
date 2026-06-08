@@ -1106,3 +1106,13 @@ body.owner .sb-login { display: none; }
 
 /* 좋아요 요청 중 — 연타 방지 시각 표시 */
 .like-btn.busy { opacity: .6; pointer-events: none; }
+
+/* 정렬 옵션 (카테고리/전체글) */
+.sort-opts { display: flex; align-items: center; gap: 6px; margin: 0 4px 16px; }
+.sort-opts .so-lbl { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-right: 4px; }
+.sort-opt {
+  font-family: var(--mono); font-size: 12px; padding: 5px 11px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--card); color: var(--dim); transition: all .15s;
+}
+.sort-opt:hover { color: var(--text); border-color: var(--faint); }
+.sort-opt.on { color: var(--accent); border-color: var(--accent-line); background: var(--accent-soft); }

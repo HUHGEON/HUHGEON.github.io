@@ -162,7 +162,8 @@
       cat: post.cat || '', sub: post.sub || '',
       tags: (post.tags || []).join(', '),
       body: post.body || '',
-      url: post.url || ''
+      url: post.url || '',
+      date: post.date || ''        // 최초 등록일(예: "2026.06.08") — 수정 시 유지용
     };
     try { localStorage.setItem('hg-edit', JSON.stringify(draft)); } catch (e) {}
     location.href = BASE + '/admin.html#edit';
@@ -278,6 +279,30 @@
      HOME / category / full-list / tag views
      ============================================================ */
   var PER = 6;
+  var currentSort = 'date';   // 'date'(최신순) | 'views'(조회수순) — 카테고리/전체글에서만
+  var viewCounts = {};        // { url: 조회수 } 캐시
+  function sortedList(list) {
+    if (currentSort !== 'views') return list;   // 기본은 등록일 내림차순(이미 정렬됨)
+    return list.slice().sort(function (a, b) { return (viewCounts[b.url] || 0) - (viewCounts[a.url] || 0); });
+  }
+  function sortToggle() {
+    return '<div class="sort-opts"><span class="so-lbl">정렬</span>' +
+      '<button class="sort-opt' + (currentSort === 'date' ? ' on' : '') + '" data-sort="date">최신순</button>' +
+      '<button class="sort-opt' + (currentSort === 'views' ? ' on' : '') + '" data-sort="views">조회수순</button></div>';
+  }
+  function ensureViewCounts(cb) {
+    var ou = ((window.AUTH || {}).oauthUrl || '').replace(/\/$/, '');
+    var todo = POSTS.filter(function (p) { return viewCounts[p.url] == null; });
+    if (!ou || !todo.length) { cb(); return; }
+    var pending = todo.length;
+    todo.forEach(function (p) {
+      fetch(ou + '/views?path=' + encodeURIComponent(p.url))   // 읽기 전용(쓰기 X)
+        .then(function (r) { return r.json(); })
+        .then(function (j) { viewCounts[p.url] = (j && j.count) || 0; })
+        .catch(function () { viewCounts[p.url] = 0; })
+        .then(function () { if (--pending === 0) cb(); });
+    });
+  }
 
   function featuredPost() {
     var marked = POSTS.filter(function (p) { return p.bookmark; });
@@ -316,7 +341,8 @@
         '<h1>' + esc(label) + '</h1><p class="sub">' + list.length + '개의 글</p>' +
         (list.length === 0 ? '<div class="cat-empty">아직 이 카테고리에 글이 없어요 — 새 글 쓰기로 첫 글을 남겨보세요.</div>' : '') +
       '</div>' +
-      '<div class="rows" id="rows">' + list.map(function (p, k) { return rowMarkup(p, k + 1); }).join('') + '</div>';
+      (list.length > 1 ? sortToggle() : '') +
+      '<div class="rows" id="rows">' + sortedList(list).map(function (p, k) { return rowMarkup(p, k + 1); }).join('') + '</div>';
     decorateRows(root);
   }
 
@@ -334,15 +360,17 @@
   }
 
   function renderAll(root, page) {
-    var pages = Math.max(1, Math.ceil(POSTS.length / PER));
+    var all = sortedList(POSTS);
+    var pages = Math.max(1, Math.ceil(all.length / PER));
     page = Math.max(1, Math.min(page || 1, pages));
-    var start = (page - 1) * PER, slice = POSTS.slice(start, start + PER);
+    var start = (page - 1) * PER, slice = all.slice(start, start + PER);
     var pager = '';
     for (var i = 1; i <= pages; i++) pager += '<button class="pg-num' + (i === page ? ' on' : '') + '" data-pg="' + i + '">' + i + '</button>';
     root.innerHTML =
       '<div class="all-head"><button class="cat-back" data-home="1">← 최근 글</button>' +
         '<div class="cat-h-cmd"><b>$</b> ls -la ~/posts <span style="color:var(--faint)">| wc -l → ' + POSTS.length + '</span></div>' +
         '<h1>전체 글</h1><p class="sub">총 ' + POSTS.length + '개 · ' + page + ' / ' + pages + ' 페이지</p></div>' +
+      (all.length > 1 ? sortToggle() : '') +
       '<div class="rows all-rows" id="rows">' + slice.map(function (p, k) { return rowMarkup(p, start + k + 1); }).join('') + '</div>' +
       '<div class="pagination">' +
         '<button class="pg-arrow" data-pg="' + (page - 1) + '"' + (page === 1 ? ' disabled' : '') + '>← 이전</button>' + pager +
@@ -406,6 +434,16 @@
 
       var see = e.target.closest('#see-all, #nav-all-posts');
       if (see) { e.preventDefault(); history.pushState(null, '', BASE + '/#all'); routeHome(); return; }
+
+      var so = e.target.closest('.sort-opt');
+      if (so) {
+        var s = so.getAttribute('data-sort');
+        if (s === currentSort) return;
+        currentSort = s;
+        if (s === 'views') { showToast('조회수 불러오는 중…'); ensureViewCounts(function () { routeHome(); }); }
+        else routeHome();
+        return;
+      }
 
       var chip = e.target.closest('.filters .chip');
       if (chip) {
