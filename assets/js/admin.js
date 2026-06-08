@@ -326,10 +326,23 @@
     window.__ghListDir = ghListDir; window.__ghGetFile = ghGetFile; window.__ghDeleteFile = ghDeleteFile2; window.__b64decode = b64decodeUtf8;
     window.__pub = { show: showPub, update: updatePub, hide: hidePub };
 
-    // 커밋 SHA의 Actions 배포가 끝나면 글로 이동 (새 글·수정 모두 정확)
-    function pollDeploy(sha, postUrl) {
+    // 커밋 SHA의 Actions 배포가 끝나고 → 글 페이지에 새 내용(marker)이 실제로 뜰 때까지 확인 후 이동
+    // marker: 수정=수정시각 문자열(YYYY.MM.DD HH:MM), 새 글=제목. CDN 전파까지 기다려 "새로고침 필요" 방지.
+    function pollDeploy(sha, postUrl, verify) {
       var conf = ghConf(), token = ghToken();
-      if (!sha || !conf.repo || !token) { setTimeout(function () { location.href = postUrl; }, 90000); return; }
+      function go() { location.href = postUrl + '?t=' + Date.now(); }
+      function verifyThenGo() {
+        updatePub('배포 완료! 반영 확인 중…', '새 내용이 뜨면 이동해요');
+        var v = 0;
+        var iv = setInterval(function () {
+          v++;
+          fetch(postUrl + '?t=' + Date.now() + '-' + v, { cache: 'no-store' })
+            .then(function (r) { if (!r.ok) throw 0; return r.text(); })
+            .then(function (html) { var ok; try { ok = !verify || verify(html); } catch (e) { ok = true; } if (ok || v >= 24) { clearInterval(iv); go(); } })
+            .catch(function () { if (v >= 24) { clearInterval(iv); go(); } });
+        }, 3000);
+      }
+      if (!sha || !conf.repo || !token) { setTimeout(verifyThenGo, 60000); return; }
       var tries = 0;
       var poll = setInterval(function () {
         tries++;
@@ -338,11 +351,11 @@
           .then(function (r) { return r.json(); })
           .then(function (j) {
             var run = j && j.workflow_runs && j.workflow_runs[0];
-            if (run && run.status === 'completed') { clearInterval(poll); updatePub('배포 완료! 글로 이동 중…', ''); setTimeout(function () { location.href = postUrl + '?t=' + Date.now(); }, 2500); }
-            else if (run && run.status === 'in_progress') { updatePub('배포 중…', '빌드가 진행 중이에요 (보통 1~2분)'); if (tries >= 40) { clearInterval(poll); location.href = postUrl; } }
-            else if (tries >= 40) { clearInterval(poll); location.href = postUrl; }
+            if (run && run.status === 'completed') { clearInterval(poll); verifyThenGo(); }
+            else if (run && run.status === 'in_progress') { updatePub('배포 중…', '빌드가 진행 중이에요 (보통 1~2분)'); if (tries >= 40) { clearInterval(poll); verifyThenGo(); } }
+            else if (tries >= 40) { clearInterval(poll); verifyThenGo(); }
           })
-          .catch(function () { if (tries >= 40) { clearInterval(poll); location.href = postUrl; } });
+          .catch(function () { if (tries >= 40) { clearInterval(poll); verifyThenGo(); } });
       }, 6000);
     }
     window.__pollDeploy = pollDeploy;
@@ -560,6 +573,9 @@
       var pub = $('#ed-publish');
       if (pub) pub.addEventListener('click', function () {
         var doc = buildDoc();
+        var _d = new Date(), _p = function (n) { return (n < 10 ? '0' : '') + n; };
+        var _stamp = _d.getFullYear() + '.' + _p(_d.getMonth() + 1) + '.' + _p(_d.getDate()) + ' ' + _p(_d.getHours()) + ':' + _p(_d.getMinutes());
+        var verifyPost = function (html) { var mk = editingUrl ? _stamp : doc.title; return !mk || html.indexOf(mk) > -1; };
         var oldPath = editingUrl ? urlToPath(editingUrl) : '';
         var fname = oldPath ? oldPath.split('/').pop() : (today() + '-' + doc.slug + '.md');
         var path = '_pages/' + catFolder() + '/' + fname;
@@ -574,7 +590,7 @@
               var sha = (res && res.commit && res.commit.sha) || '';
               var done = function () {
                 updatePub('배포 중…', '빌드되면 자동으로 글로 이동해요 (보통 1~2분)');
-                pollDeploy(sha, pathToUrl(path));
+                pollDeploy(sha, pathToUrl(path), verifyPost);
               };
               if (moved) {   // 옛 위치 파일 삭제(이동 완성)
                 window.__ghGetFile(conf, token, oldPath)
