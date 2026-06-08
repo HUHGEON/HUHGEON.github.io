@@ -113,6 +113,30 @@
   }
   window.__toast = toast;
 
+  /* ---------- 발행 진행 모달 (스피너 + 경과시간) ---------- */
+  var pubTimer = null, pubStart = 0;
+  function showPub(title, sub) {
+    var m = $('#pub-modal'); if (!m) return;
+    var t = $('#pub-title'), s = $('#pub-sub'), e = $('#pub-elapsed');
+    if (t) t.textContent = title; if (s) s.textContent = sub;
+    m.hidden = false;
+    pubStart = Date.now();
+    if (e) {
+      clearInterval(pubTimer);
+      e.textContent = '0:00 경과';
+      pubTimer = setInterval(function () {
+        var sec = Math.floor((Date.now() - pubStart) / 1000);
+        e.textContent = Math.floor(sec / 60) + ':' + (sec % 60 < 10 ? '0' : '') + (sec % 60) + ' 경과';
+      }, 1000);
+    }
+  }
+  function updatePub(title, sub) {
+    var t = $('#pub-title'), s = $('#pub-sub');
+    if (title != null && t) t.textContent = title;
+    if (sub != null && s) s.textContent = sub;
+  }
+  function hidePub() { var m = $('#pub-modal'); if (m) m.hidden = true; clearInterval(pubTimer); }
+
   function ready(fn) { if (document.readyState !== 'loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
   ready(function () {
     /* theme toggle */
@@ -257,7 +281,8 @@
           .then(function (r) { return r.json(); })
           .then(function (j) {
             var run = j && j.workflow_runs && j.workflow_runs[0];
-            if (run && run.status === 'completed') { clearInterval(poll); setTimeout(function () { location.href = postUrl + '?t=' + Date.now(); }, 4000); }
+            if (run && run.status === 'completed') { clearInterval(poll); updatePub('배포 완료! 글로 이동 중…', ''); setTimeout(function () { location.href = postUrl + '?t=' + Date.now(); }, 2500); }
+            else if (run && run.status === 'in_progress') { updatePub('배포 중…', '빌드가 진행 중이에요 (보통 1~2분)'); if (tries >= 40) { clearInterval(poll); location.href = postUrl; } }
             else if (tries >= 40) { clearInterval(poll); location.href = postUrl; }
           })
           .catch(function () { if (tries >= 40) { clearInterval(poll); location.href = postUrl; } });
@@ -464,17 +489,18 @@
         var fname = path.split('/').pop();
         var conf = ghConf(), token = ghToken();
         if (token && conf.repo) {
-          pub.disabled = true; var lbl = pub.querySelector('svg') ? null : null;
-          toast('GitHub에 커밋 중…');
+          pub.disabled = true;
+          showPub('커밋 중…', 'GitHub에 글을 올리고 있어요');
           githubPutFile(conf, token, path, doc.content, (editingUrl ? 'edit: ' : 'post: ') + doc.title)
             .then(function (res) {
               localStorage.removeItem('hg-edit');
               var postUrl = editingUrl || pathToUrl(path);
               var sha = (res && res.commit && res.commit.sha) || '';
-              toast('✅ 커밋 완료! 배포되면 자동으로 글로 이동해요 (보통 1~2분)');
+              updatePub('배포 중…', '빌드되면 자동으로 글로 이동해요 (보통 1~2분)');
               pollDeploy(sha, postUrl);
             })
             .catch(function (err) {
+              hidePub();
               toast('푸시 실패(' + err.message + ') — .md 파일로 대신 받을게요');
               downloadMd(doc.content, fname);
               pub.disabled = false;

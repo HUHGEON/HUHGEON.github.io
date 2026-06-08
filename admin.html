@@ -200,6 +200,16 @@ sitemap: false
   </div>
 </div>
 
+<!-- 발행 진행 모달 (커밋 → 배포 → 이동까지) -->
+<div class="pub-modal" id="pub-modal" hidden>
+  <div class="pub-card">
+    <div class="pub-spinner"></div>
+    <div class="pub-title" id="pub-title">커밋 중…</div>
+    <div class="pub-sub" id="pub-sub">잠시만 기다려주세요</div>
+    <div class="pub-elapsed" id="pub-elapsed"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"><span class="dot"></span> <span id="toast-msg"></span></div>
 
 {% include posts_data.html %}
