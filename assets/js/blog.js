@@ -123,12 +123,10 @@
   }
 
   function heroMarkup(p) {
-    // 전용 커버가 있으면 이미지, 없으면 테마 그라데이션(정사각 프로필 늘려서 깨지는 것 방지)
-    var bgEl = p.thumb
-      ? '<div class="bg" style="background-image:url(\'' + escAttr(p.thumb) + '\')"></div>'
-      : '<div class="bg bg-grad"></div>';
-    return '<article class="hero' + (p.thumb ? '' : ' no-cover') + '" data-url="' + escAttr(p.url) + '">' +
-      bgEl +
+    // 전용 커버가 없으면 기본 썸네일(가로 이미지) 사용
+    var cover = p.thumb || DEFAULT_THUMB;
+    return '<article class="hero" data-url="' + escAttr(p.url) + '">' +
+      '<div class="bg" style="background-image:url(\'' + escAttr(cover) + '\')"></div>' +
       '<div class="inner">' +
         '<span class="kicker"><svg viewBox="0 0 576 512"><path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.6 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L421.2 329 535.3 217.6c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L373.1 150.3 316.9 18z"></path></svg> FEATURED</span>' +
         '<h2>' + esc(p.title) + '</h2>' +
@@ -236,7 +234,7 @@
 
     var navTags = $('#nav-tags');
     if (navTags) {
-      navTags.innerHTML = tagCounts().slice(0, 8).map(function (t) {
+      navTags.innerHTML = tagCounts().slice(0, 6).map(function (t) {
         return '<a class="tag" href="' + BASE + '/#tag=' + encodeURIComponent(t.tag) + '">' + esc(t.tag) + '</a>';
       }).join('');
     }
