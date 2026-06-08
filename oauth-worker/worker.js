@@ -10,7 +10,8 @@
  *   GITHUB_CLIENT_SECRET  (시크릿)            - GitHub OAuth App 의 Client Secret
  *   ALLOWED_ORIGIN        (변수)              - 블로그 주소 (예: https://huhgeon.github.io)
  *
- * 조회수 카운터(선택)를 쓰려면 KV 네임스페이스를 만들고 이 워커에 `VIEWS` 라는 이름으로 바인딩하세요.
+ * 좋아요 카운터(선택)를 쓰려면 KV 네임스페이스를 만들고 이 워커에 `VIEWS` 라는 이름으로 바인딩하세요.
+ * (댓글은 giscus 가 담당하므로 워커는 로그인/조회수/좋아요만 처리합니다.)
  *
  * GitHub OAuth App 의 "Authorization callback URL" 은 이 워커의 /callback 으로:
  *   예) https://hg-oauth.<subdomain>.workers.dev/callback

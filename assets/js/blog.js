@@ -51,20 +51,36 @@
     window.addEventListener('message', onMsg);
   }
   function logoutGitHub() { localStorage.removeItem('hg-gh-token'); localStorage.removeItem('hg-gh-user'); location.reload(); }
+  function goToComments() {
+    var c = document.querySelector('#giscus') || document.querySelector('.comments');
+    if (c) { c.scrollIntoView({ behavior: 'smooth' }); showToast('댓글창에서 GitHub로 로그인하면 댓글을 남길 수 있어요'); }
+    else { showToast('글을 열면 맨 아래 댓글창에서 GitHub로 로그인해 댓글을 남길 수 있어요'); }
+  }
   function renderAuthBtn() {
-    var b = $('#tb-auth'); if (!b) return;
+    var wrap = $('#tb-auth-wrap'), b = $('#tb-auth'), menu = $('#tb-auth-menu'); if (!b) return;
     if (isOwnerLoggedIn()) {
       b.innerHTML = GH_ICON + '<span>로그아웃</span>';
       b.title = '@' + ghUser() + ' · 로그아웃';
       b.classList.add('on');
       b.onclick = logoutGitHub;
+      if (menu) menu.hidden = true;
     } else {
-      b.innerHTML = GH_ICON + '<span>로그인</span>';
-      b.title = 'GitHub로 로그인';
+      b.innerHTML = GH_ICON + '<span>로그인 ▾</span>';
+      b.title = '로그인';
       b.classList.remove('on');
-      b.onclick = loginGitHub;
+      b.onclick = function (e) { e.stopPropagation(); if (menu) menu.hidden = !menu.hidden; };
+      if (menu) {
+        menu.innerHTML =
+          '<button data-auth="admin"><span class="ic">🔧</span> 관리자 로그인</button>' +
+          '<button data-auth="guest"><span class="ic">💬</span> 일반 로그인 (댓글)</button>';
+        menu.onclick = function (e) {
+          var t = e.target.closest('[data-auth]'); if (!t) return;
+          menu.hidden = true;
+          if (t.getAttribute('data-auth') === 'admin') loginGitHub(); else goToComments();
+        };
+      }
     }
-    b.hidden = false;
+    if (wrap) wrap.hidden = false;
   }
   window.__login = loginGitHub; window.__logout = logoutGitHub;
 
@@ -603,6 +619,12 @@
       var now = document.body.classList.contains('light') ? 'dark' : 'light';
       localStorage.setItem(TKEY, now); applyTheme(now);
       syncGiscusTheme(giscusTheme());
+    });
+
+    // 로그인 드롭다운: 바깥 클릭 시 닫기
+    document.addEventListener('click', function (e) {
+      var menu = $('#tb-auth-menu');
+      if (menu && !menu.hidden && !e.target.closest('#tb-auth-wrap')) menu.hidden = true;
     });
 
     var sb = $('#sidebar'), scrim = $('#scrim'), hamb = $('#hamb');

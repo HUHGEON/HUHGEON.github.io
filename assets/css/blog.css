@@ -1028,3 +1028,20 @@ body.owner .sb-login { display: none; }
 .tb-auth:hover { color: var(--accent); border-color: var(--accent-line); }
 .tb-auth.on { color: var(--accent); border-color: var(--accent-line); background: var(--accent-soft); }
 @media (max-width: 640px) { .tb-auth span { display: none; } .tb-auth { padding: 0 11px; } }
+
+/* 상단 로그인 드롭다운 (관리자 / 일반) */
+.tb-auth-wrap { position: relative; }
+.tb-auth-menu {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 60;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: var(--shadow); padding: 6px; min-width: 196px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.tb-auth-menu[hidden] { display: none; }
+.tb-auth-menu button {
+  display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
+  padding: 10px 11px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  color: var(--text); white-space: nowrap; transition: background .12s, color .12s;
+}
+.tb-auth-menu button:hover { background: var(--card); color: var(--accent); }
+.tb-auth-menu .ic { font-size: 13px; }
