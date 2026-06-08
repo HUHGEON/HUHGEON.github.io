@@ -187,19 +187,22 @@
   function catCount(cat) { return POSTS.filter(function (p) { return p.cat === cat; }).length; }
   function subCount(cat, sub) { return POSTS.filter(function (p) { return p.cat === cat && p.sub === sub; }).length; }
 
+  function catUrl(cat) { return BASE + '/' + encodeURIComponent(cat) + '/'; }
+  function subUrl(cat, sub) { return BASE + '/' + encodeURIComponent(cat) + '/' + encodeURIComponent(sub) + '/'; }
   function buildCatTree() {
     // group CAT_NODES into { cat: {url, subs:[{name,url}]} }
     var order = [], map = {};
     CAT_NODES.forEach(function (n) {
-      if (!map[n.cat]) { map[n.cat] = { name: n.cat, url: '', subs: [] }; order.push(n.cat); }
+      // 부모 index.md 없어도 /카테고리/ 로 이동되게 기본 url 구성 (홈으로 빠지지 않음)
+      if (!map[n.cat]) { map[n.cat] = { name: n.cat, url: catUrl(n.cat), subs: [] }; order.push(n.cat); }
       if (!n.sub) { map[n.cat].url = n.url; }
       else { map[n.cat].subs.push({ name: n.sub, url: n.url }); }
     });
     // posts may reference cats with no index.md — include them too
     POSTS.forEach(function (p) {
-      if (!map[p.cat]) { map[p.cat] = { name: p.cat, url: BASE + '/', subs: [] }; order.push(p.cat); }
+      if (!map[p.cat]) { map[p.cat] = { name: p.cat, url: catUrl(p.cat), subs: [] }; order.push(p.cat); }
       if (p.sub && !map[p.cat].subs.some(function (s) { return s.name === p.sub; })) {
-        map[p.cat].subs.push({ name: p.sub, url: '' });
+        map[p.cat].subs.push({ name: p.sub, url: subUrl(p.cat, p.sub) });
       }
     });
     return order.map(function (c) { return map[c]; });
