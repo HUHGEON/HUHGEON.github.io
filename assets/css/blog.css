@@ -37,6 +37,14 @@
   --code-num:  #e0bd84;
   --code-com:  #6f7d92;
 
+  /* 표 (다크) */
+  --tbl-border:    #2a3343;
+  --tbl-head:      #232c3b;
+  --tbl-line:      #232b38;
+  --tbl-row:       #161b24;
+  --tbl-row-alt:   #1a212c;
+  --tbl-row-hover: #1f2835;
+
   /* primary accent — dusty blue (default). Overridden at runtime. */
   --accent:      #7aa2c9;
   --accent-2:    #9bbbde;
@@ -82,6 +90,13 @@ body.light {
   --code-str:  #3f7d4f;
   --code-num:  #9a6a1a;
   --code-com:  #9aa0a8;
+  /* 표 (라이트) */
+  --tbl-border:    #d7e0ee;
+  --tbl-head:      #e7edf6;
+  --tbl-line:      #e1e8f2;
+  --tbl-row:       #ffffff;
+  --tbl-row-alt:   #f5f8fc;
+  --tbl-row-hover: #eef3fa;
   --text:        #1a1d22;
   --dim:         #5a626d;
   --faint:       #9aa1aa;
@@ -1183,10 +1198,22 @@ body.owner .sb-login { display: none; }
 .mermaid:not([data-processed]) { color: var(--faint); font-family: var(--mono); font-size: 12px; }
 
 /* 표(table) — Jekyll(.prose) + 에디터 미리보기 공통 */
-.prose .table-wrap, .ed-preview .table-wrap { overflow-x: auto; margin: 0 0 22px; }
-.prose table, .ed-preview table { width: 100%; border-collapse: collapse; margin: 0 0 22px; font-size: 14px; }
-.prose .table-wrap table, .ed-preview .table-wrap table { margin: 0; }
-.prose th, .prose td, .ed-preview th, .ed-preview td { border: 1px solid var(--border); padding: 9px 13px; text-align: left; }
-.prose th, .ed-preview th { background: var(--card-2); font-weight: 700; color: var(--text); white-space: nowrap; }
-.prose td, .ed-preview td { color: var(--dim); }
-.prose tbody tr:hover td, .ed-preview tbody tr:hover td { background: color-mix(in srgb, var(--accent-soft), transparent 40%); }
+.prose .table-wrap { overflow-x: auto; margin: 0 0 24px; }
+.prose table {
+  width: 100%; border-collapse: separate; border-spacing: 0; margin: 0 0 24px;
+  font-size: 14.5px; line-height: 1.55;
+  border: 1px solid var(--tbl-border); border-radius: 11px; overflow: hidden;
+}
+.prose .table-wrap table { margin: 0; }
+.prose thead th { background: var(--tbl-head); color: var(--text); font-weight: 700; text-align: left; }
+.prose th, .prose td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--tbl-line);
+  border-right: 1px solid var(--tbl-line);
+}
+.prose th:last-child, .prose td:last-child { border-right: none; }
+.prose tbody tr:last-child td { border-bottom: none; }
+.prose tbody tr { background: var(--tbl-row); }
+.prose tbody tr:nth-child(even) { background: var(--tbl-row-alt); }
+.prose tbody tr:hover { background: var(--tbl-row-hover); }
+.prose tbody td { color: var(--text); }
