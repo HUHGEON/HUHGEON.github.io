@@ -53,6 +53,7 @@
         var lang = fence[1] || '', body = []; i++;
         while (i < lines.length && !/^```/.test(lines[i])) { body.push(lines[i]); i++; }
         i++;
+        if (lang === 'mermaid') { out.push('<div class="mermaid">' + esc(body.join('\n')) + '</div>'); continue; }
         out.push('<div class="codeblock"><div class="cb-head">' +
           '<span class="d" style="background:#cf8a93"></span><span class="d" style="background:#c2a06a"></span><span class="d" style="background:#86ad8e"></span>' +
           '<span class="lang">' + (lang || 'code') + '</span>' +
@@ -69,6 +70,18 @@
         i++; continue;
       }
       if (/^(---|\*\*\*|___)\s*$/.test(ln)) { flushPara(para); out.push('<hr>'); i++; continue; }
+      // GFM 표: | h1 | h2 | 다음 줄이 | --- | --- |
+      if (/^\s*\|.*\|\s*$/.test(ln) && i + 1 < lines.length && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1])) {
+        flushPara(para);
+        var splitRow = function (r) { return r.trim().replace(/^\||\|$/g, '').split('|').map(function (c) { return c.trim(); }); };
+        var th = splitRow(ln); i += 2;
+        var trs = [];
+        while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) { trs.push(splitRow(lines[i])); i++; }
+        var thead = '<thead><tr>' + th.map(function (h) { return '<th>' + inline(h) + '</th>'; }).join('') + '</tr></thead>';
+        var tbody = '<tbody>' + trs.map(function (r) { return '<tr>' + r.map(function (c) { return '<td>' + inline(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody>';
+        out.push('<div class="table-wrap"><table>' + thead + tbody + '</table></div>');
+        continue;
+      }
       if (/^>\s?/.test(ln)) { flushPara(para); var q = []; while (i < lines.length && /^>\s?/.test(lines[i])) { q.push(lines[i].replace(/^>\s?/, '')); i++; } out.push('<blockquote><p>' + inline(q.join(' ')) + '</p></blockquote>'); continue; }
       if (/^\s*[-*]\s+/.test(ln)) { flushPara(para); var items = []; while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) { items.push('<li>' + inline(lines[i].replace(/^\s*[-*]\s+/, '')) + '</li>'); i++; } out.push('<ul>' + items.join('') + '</ul>'); continue; }
       if (/^\s*\d+\.\s+/.test(ln)) { flushPara(para); var oi = []; while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) { oi.push('<li>' + inline(lines[i].replace(/^\s*\d+\.\s+/, '')) + '</li>'); i++; } out.push('<ol>' + oi.join('') + '</ol>'); continue; }
@@ -91,6 +104,26 @@
     var off = -d.getTimezoneOffset(), sign = off >= 0 ? '+' : '-'; off = Math.abs(off);
     var tz = sign + p(Math.floor(off / 60)) + p(off % 60);
     return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()) + ' ' + tz;
+  }
+
+  /* ---------- Mermaid (에디터 미리보기) ---------- */
+  function renderMermaidPv() {
+    if (!window.mermaid) return;
+    try {
+      window.mermaid.initialize({ startOnLoad: false, securityLevel: 'loose',
+        theme: document.body.classList.contains('light') ? 'neutral' : 'dark' });
+      window.mermaid.run({ querySelector: '#ed-prose .mermaid' });
+    } catch (e) {}
+  }
+  var mmLoading = false;
+  function loadMermaid() {
+    if (window.mermaid) { renderMermaidPv(); return; }
+    if (mmLoading) return; mmLoading = true;
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
+    s.onload = renderMermaidPv;
+    s.onerror = function () { mmLoading = false; };
+    document.head.appendChild(s);
   }
 
   /* ---------- view switching (#write / #manage) ---------- */
@@ -340,6 +373,7 @@
           var s = img.getAttribute('src');
           if (uploadedImages[s]) img.src = uploadedImages[s];
         });
+        if (prev.querySelector('.mermaid')) loadMermaid();   // mermaid 다이어그램 렌더
         var title = (tEl.value || '').trim();
         pvTitle.textContent = title || '제목 없음';
         pvCat.textContent = cEl.value || 'Uncategorized';
@@ -377,6 +411,8 @@
           else if (act === 'codeblock') wrap('\n```js\n', '\n```\n', 'console.log("hi")');
           else if (act === 'quote') linePrefix('> ');
           else if (act === 'list') linePrefix('- ');
+          else if (act === 'table') insertAtCursor('\n| 제목1 | 제목2 | 제목3 |\n| --- | --- | --- |\n| 내용 | 내용 | 내용 |\n| 내용 | 내용 | 내용 |\n');
+          else if (act === 'mermaid') insertAtCursor('\n```mermaid\nflowchart TD\n  A[시작] --> B{조건}\n  B -->|예| C[처리]\n  B -->|아니오| D[종료]\n```\n');
           else if (act === 'link') wrap('[', '](https://)', '링크');
           else if (act === 'image') wrap('![', '](https://)', 'alt');
         });

@@ -504,9 +504,44 @@
   /* ============================================================
      POST page: like / codeblocks / TOC / related / giscus
      ============================================================ */
+  /* ---------- Mermaid 다이어그램 ---------- */
+  function renderMermaid() {
+    if (!window.mermaid) return;
+    try {
+      window.mermaid.initialize({ startOnLoad: false, securityLevel: 'loose',
+        theme: document.body.classList.contains('light') ? 'neutral' : 'dark' });
+      window.mermaid.run({ querySelector: '.mermaid' });
+    } catch (e) {}
+  }
+  var mermaidLoading = false;
+  function loadMermaid() {
+    if (window.mermaid) { renderMermaid(); return; }
+    if (mermaidLoading) return;
+    mermaidLoading = true;
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
+    s.onload = renderMermaid;
+    s.onerror = function () { mermaidLoading = false; };
+    document.head.appendChild(s);
+  }
+
   function initPost() {
     var vp = $('#view-post'); if (!vp) return;
     var isDoc = vp.classList.contains('doc-page');
+
+    /* mermaid 코드블럭 먼저: ```mermaid → 다이어그램 div 로 교체 */
+    var mermaidBlocks = [];
+    $$('.prose pre').forEach(function (pre) {
+      var code = pre.querySelector('code');
+      var ml = code ? ((code.className || '').match(/language-(mermaid)/) || [])[1] : null;
+      if (ml === 'mermaid') {
+        var div = document.createElement('div'); div.className = 'mermaid';
+        div.textContent = (code ? code.textContent : pre.textContent);
+        pre.parentNode.replaceChild(div, pre);
+        mermaidBlocks.push(div);
+      }
+    });
+    if (mermaidBlocks.length) loadMermaid();
 
     /* code blocks: highlight + wrap traffic-light header + copy (모든 글/문서) */
     if (window.hljs) { try { hljs.highlightAll(); } catch (e) {} }

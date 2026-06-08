@@ -1154,3 +1154,20 @@ body.owner .sb-login { display: none; }
 .cat-crumb a { color: var(--c-cat); transition: color .15s; }
 .cat-crumb a:hover { color: var(--accent); text-decoration: underline; }
 .cat-crumb .catsep { color: var(--faint); }
+
+/* Mermaid 다이어그램 */
+.prose .mermaid, .ed-preview .mermaid {
+  margin: 0 0 24px; padding: 18px; text-align: center;
+  background: var(--card-2); border: 1px solid var(--border); border-radius: 13px; overflow-x: auto;
+}
+.prose .mermaid svg, .ed-preview .mermaid svg { max-width: 100%; height: auto; }
+.mermaid:not([data-processed]) { color: var(--faint); font-family: var(--mono); font-size: 12px; }
+
+/* 표(table) — Jekyll(.prose) + 에디터 미리보기 공통 */
+.prose .table-wrap, .ed-preview .table-wrap { overflow-x: auto; margin: 0 0 22px; }
+.prose table, .ed-preview table { width: 100%; border-collapse: collapse; margin: 0 0 22px; font-size: 14px; }
+.prose .table-wrap table, .ed-preview .table-wrap table { margin: 0; }
+.prose th, .prose td, .ed-preview th, .ed-preview td { border: 1px solid var(--border); padding: 9px 13px; text-align: left; }
+.prose th, .ed-preview th { background: var(--card-2); font-weight: 700; color: var(--text); white-space: nowrap; }
+.prose td, .ed-preview td { color: var(--dim); }
+.prose tbody tr:hover td, .ed-preview tbody tr:hover td { background: color-mix(in srgb, var(--accent-soft), transparent 40%); }
