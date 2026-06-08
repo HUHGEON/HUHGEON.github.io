@@ -737,23 +737,29 @@
     }
   }
 
-  /* 워커 조회수: '실제 글 상세'에서만, 같은 브라우저는 글당 1번만 +1(쓰기).
-     홈·카테고리·문서 페이지는 쓰기 안 함(총 방문 표시는 읽기만). → KV 쓰기 한도 대폭 절약 */
+  function fmtNum(n) { return (n != null && n.toLocaleString) ? n.toLocaleString() : n; }
+  /* 조회수(글별): 글 상세에서만, 같은 브라우저는 글당 1번만 +1(쓰기). 그 외엔 읽기만. */
   function countViews() {
     var ou = ((window.AUTH || {}).oauthUrl || '').replace(/\/$/, '');
     if (!ou) return;
-    var isPost = !!$('#page-hits');                 // 글 상세에만 byline views 가 있음
+    var hits = $('#page-hits'); if (!hits) return;            // 글 상세에만 존재
     var vkey = 'hg-viewed:' + location.pathname;
-    var firstView = isPost && !localStorage.getItem(vkey);   // 글이고 첫 방문일 때만 쓰기
+    var firstView = !localStorage.getItem(vkey);
     if (firstView) { try { localStorage.setItem(vkey, '1'); } catch (e) {} }
     fetch(ou + '/views?path=' + encodeURIComponent(location.pathname) + (firstView ? '&inc=1' : ''))
       .then(function (r) { return r.json(); })
-      .then(function (j) {
-        if (!j) return;
-        var hits = $('#page-hits'), wrap = $('.stat-views'), sh = $('#site-hits');
-        if (hits && j.count != null) { hits.textContent = j.count; if (wrap) wrap.hidden = false; }
-        if (sh && j.total != null) sh.textContent = (j.total.toLocaleString ? j.total.toLocaleString() : j.total);
-      })
+      .then(function (j) { if (j && j.count != null) { hits.textContent = j.count; var w = $('.stat-views'); if (w) w.hidden = false; } })
+      .catch(function () {});
+  }
+  /* 총 방문(고유 방문자): 브라우저당 사이트 첫 방문에만 +1(쓰기), 그 외엔 읽기만. 사이드바에 표시. */
+  function countVisitors() {
+    var ou = ((window.AUTH || {}).oauthUrl || '').replace(/\/$/, '');
+    var sh = $('#site-hits'); if (!ou || !sh) return;
+    var firstEver = !localStorage.getItem('hg-visited');
+    if (firstEver) { try { localStorage.setItem('hg-visited', '1'); } catch (e) {} }
+    fetch(ou + '/views?path=__visitors__' + (firstEver ? '&inc=1' : ''))
+      .then(function (r) { return r.json(); })
+      .then(function (j) { if (j && j.count != null) sh.textContent = fmtNum(j.count); })
       .catch(function () {});
   }
 
@@ -769,5 +775,6 @@
     markActiveNav();
     initPost();
     countViews();
+    countVisitors();
   });
 })();

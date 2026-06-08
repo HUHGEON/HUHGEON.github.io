@@ -55,20 +55,19 @@ export default {
       'Content-Type': 'application/json',
     };
 
-    // ② 조회수: inc=1 일 때만 +1(쓰기), 아니면 읽기만 → KV 쓰기 한도 절약
+    // ② 카운터: 조회수(글별)와 방문자수 공용. inc=1 일 때만 +1(쓰기), 아니면 읽기만.
+    //    /views?path=<글경로>  → 글 조회수,  /views?path=__visitors__ → 고유 방문자수
     if (url.pathname === '/views') {
       if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
       const p = (url.searchParams.get('path') || '/').slice(0, 300);
       const inc = url.searchParams.get('inc') === '1';
       if (env.COUNTER) {
         const count = await doCount(env, 'v:' + p, inc ? 'inc' : 'get');
-        const total = await doCount(env, '__total__', inc ? 'inc' : 'get');
-        return new Response(JSON.stringify({ count, total }), { headers: cors });
+        return new Response(JSON.stringify({ count }), { headers: cors });
       }
       if (!env.VIEWS) return new Response(JSON.stringify({ count: null, error: 'no-store' }), { headers: cors });
       const count = await kvCount(env, 'v:' + p, inc ? 1 : 0);
-      const total = await kvCount(env, 'v:__total__', inc ? 1 : 0);
-      return new Response(JSON.stringify({ count, total }), { headers: cors });
+      return new Response(JSON.stringify({ count }), { headers: cors });
     }
 
     // ③ 좋아요: GET=조회, POST=±1 (op=inc|dec)
