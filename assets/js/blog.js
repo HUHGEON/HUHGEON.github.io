@@ -333,11 +333,15 @@
   function renderFiltered(root, cat, sub) {
     var list = POSTS.filter(function (p) { return p.cat === cat && (!sub || p.sub === sub); });
     var label = sub || cat;
-    var slug = (cat + (sub ? '/' + sub : '')).replace(/\s+/g, '-');
+    // 터미널 경로의 각 카테고리를 클릭 가능하게 (부모/자식 → 해당 목록으로)
+    var catUrl = BASE + '/' + encodeURIComponent(cat) + '/';
+    var pathHtml = '<a href="' + catUrl + '">' + esc(cat.replace(/\s+/g, '-')) + '</a>' +
+      (sub ? '/<a href="' + BASE + '/' + encodeURIComponent(cat) + '/' + encodeURIComponent(sub) + '/">' + esc(sub.replace(/\s+/g, '-')) + '</a>' : '');
     root.innerHTML =
       '<div class="cat-header">' +
         '<button class="cat-back" data-home="1">← 전체 글</button>' +
-        '<div class="cat-h-cmd"><b>$</b> ls ~/' + esc(slug) + '</div>' +
+        '<div class="cat-h-cmd"><b>$</b> ls ~/' + pathHtml + '</div>' +
+        (sub ? '<div class="cat-crumb"><a href="' + catUrl + '">' + esc(cat) + '</a> <span class="catsep">·</span> ' + esc(sub) + '</div>' : '') +
         '<h1>' + esc(label) + '</h1><p class="sub">' + list.length + '개의 글</p>' +
         (list.length === 0 ? '<div class="cat-empty">아직 이 카테고리에 글이 없어요 — 새 글 쓰기로 첫 글을 남겨보세요.</div>' : '') +
       '</div>' +

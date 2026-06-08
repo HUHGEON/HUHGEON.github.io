@@ -1146,3 +1146,11 @@ body.owner .sb-login { display: none; }
 .post-hero .cat a { color: var(--c-cat); transition: color .15s; }
 .post-hero .cat a:hover { color: var(--accent); text-decoration: underline; }
 .post-hero .cat .catsep { color: var(--faint); }
+
+/* 카테고리 목록 페이지 — 경로/브레드크럼 클릭 (부모 카테고리로 이동) */
+.cat-h-cmd a { color: var(--dim); transition: color .15s; }
+.cat-h-cmd a:hover { color: var(--accent); text-decoration: underline; }
+.cat-crumb { font-family: var(--mono); font-size: 12.5px; color: var(--dim); margin: 8px 0 2px; }
+.cat-crumb a { color: var(--c-cat); transition: color .15s; }
+.cat-crumb a:hover { color: var(--accent); text-decoration: underline; }
+.cat-crumb .catsep { color: var(--faint); }
