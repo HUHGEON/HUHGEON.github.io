@@ -1045,3 +1045,33 @@ body.owner .sb-login { display: none; }
 }
 .tb-auth-menu button:hover { background: var(--card); color: var(--accent); }
 .tb-auth-menu .ic { font-size: 13px; }
+
+/* 로그인 선택 모달 (관리자 / 일반) */
+.login-modal {
+  position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 24px;
+  background: rgba(0,0,0,.55); backdrop-filter: blur(3px);
+}
+.login-modal[hidden] { display: none; }
+.login-card {
+  position: relative; width: min(420px, 92vw);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow); padding: 30px 28px 26px; text-align: center;
+}
+.lm-close {
+  position: absolute; top: 14px; right: 16px; width: 30px; height: 30px; border-radius: 8px;
+  color: var(--faint); font-size: 15px; transition: .15s;
+}
+.lm-close:hover { background: var(--card); color: var(--text); }
+.login-card h2 { font-family: var(--display); font-weight: 700; font-size: 19px; letter-spacing: -.01em; margin: 0 0 6px; }
+.login-card > p { color: var(--dim); font-size: 13.5px; margin: 0 0 20px; }
+.lm-options { display: flex; flex-direction: column; gap: 10px; }
+.lm-opt {
+  display: flex; align-items: center; gap: 13px; text-align: left; width: 100%;
+  padding: 14px 16px; border-radius: 13px; border: 1px solid var(--border); background: var(--card);
+  transition: border-color .15s, transform .15s, background .15s;
+}
+.lm-opt:hover { border-color: var(--accent-line); background: var(--accent-soft); transform: translateY(-1px); }
+.lm-ic { font-size: 20px; flex-shrink: 0; }
+.lm-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lm-txt b { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.lm-txt small { font-size: 12px; color: var(--dim); }

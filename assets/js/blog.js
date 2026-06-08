@@ -51,34 +51,51 @@
     window.addEventListener('message', onMsg);
   }
   function logoutGitHub() { localStorage.removeItem('hg-gh-token'); localStorage.removeItem('hg-gh-user'); location.reload(); }
+  function urlToPath(url) {
+    var u = String(url || '').replace(/^https?:\/\/[^/]+/, '').replace(/^\//, '');
+    try { u = decodeURIComponent(u); } catch (e) {}
+    return '_pages/' + u.replace(/\.html$/, '.md');
+  }
+  function ghDeleteFile(path, message) {
+    var au = window.AUTH || {};
+    var repo = (au.repo || '').trim(), branch = (au.branch || 'main').trim(), token = ghToken();
+    if (!repo || !token) return Promise.reject(new Error('로그인 필요'));
+    var api = 'https://api.github.com/repos/' + repo + '/contents/' + path.split('/').map(encodeURIComponent).join('/');
+    var headers = { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' };
+    return fetch(api + '?ref=' + encodeURIComponent(branch), { headers: headers })
+      .then(function (r) { if (!r.ok) throw new Error('GET ' + r.status); return r.json(); })
+      .then(function (j) { return fetch(api, { method: 'DELETE', headers: headers, body: JSON.stringify({ message: message, sha: j.sha, branch: branch }) }); })
+      .then(function (r) { if (r.status === 200) return r.json(); return r.json().then(function (e) { throw new Error(e.message || ('DELETE ' + r.status)); }); });
+  }
   function goToComments() {
     var c = document.querySelector('#giscus') || document.querySelector('.comments');
     if (c) { c.scrollIntoView({ behavior: 'smooth' }); showToast('댓글창에서 GitHub로 로그인하면 댓글을 남길 수 있어요'); }
     else { showToast('글을 열면 맨 아래 댓글창에서 GitHub로 로그인해 댓글을 남길 수 있어요'); }
   }
+  function openLoginModal() { var m = $('#login-modal'); if (m) m.hidden = false; }
+  function closeLoginModal() { var m = $('#login-modal'); if (m) m.hidden = true; }
+  function bindLoginModal() {
+    var m = $('#login-modal'); if (!m) return;
+    m.addEventListener('click', function (e) {
+      if (e.target === m || e.target.closest('[data-close]')) { closeLoginModal(); return; }
+      var opt = e.target.closest('[data-auth]'); if (!opt) return;
+      closeLoginModal();
+      if (opt.getAttribute('data-auth') === 'admin') loginGitHub(); else goToComments();
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeLoginModal(); });
+  }
   function renderAuthBtn() {
-    var wrap = $('#tb-auth-wrap'), b = $('#tb-auth'), menu = $('#tb-auth-menu'); if (!b) return;
+    var wrap = $('#tb-auth-wrap'), b = $('#tb-auth'); if (!b) return;
     if (isOwnerLoggedIn()) {
       b.innerHTML = GH_ICON + '<span>로그아웃</span>';
       b.title = '@' + ghUser() + ' · 로그아웃';
       b.classList.add('on');
       b.onclick = logoutGitHub;
-      if (menu) menu.hidden = true;
     } else {
-      b.innerHTML = GH_ICON + '<span>로그인 ▾</span>';
+      b.innerHTML = GH_ICON + '<span>로그인</span>';
       b.title = '로그인';
       b.classList.remove('on');
-      b.onclick = function (e) { e.stopPropagation(); if (menu) menu.hidden = !menu.hidden; };
-      if (menu) {
-        menu.innerHTML =
-          '<button data-auth="admin"><span class="ic">🔧</span> 관리자 로그인</button>' +
-          '<button data-auth="guest"><span class="ic">💬</span> 일반 로그인 (댓글)</button>';
-        menu.onclick = function (e) {
-          var t = e.target.closest('[data-auth]'); if (!t) return;
-          menu.hidden = true;
-          if (t.getAttribute('data-auth') === 'admin') loginGitHub(); else goToComments();
-        };
-      }
+      b.onclick = openLoginModal;
     }
     if (wrap) wrap.hidden = false;
   }
@@ -367,9 +384,15 @@
     vh.addEventListener('click', function (e) {
       if (e.target.closest('[data-rowdel]')) {
         e.preventDefault();
-        var row = e.target.closest('.row');
-        if (row) { row.style.transition = 'opacity .2s, transform .2s'; row.style.opacity = '0'; row.style.transform = 'translateX(-8px)';
-          setTimeout(function () { row.remove(); }, 200); showToast('정적 사이트라 화면에서만 숨겨졌어요 — 실제 삭제는 GitHub에서'); }
+        var drow = e.target.closest('.row');
+        var dp = findPostByUrl(drow && drow.getAttribute('data-url'));
+        if (!isOwnerLoggedIn()) { showToast('관리자로 로그인해야 삭제할 수 있어요'); return; }
+        if (!dp) return;
+        if (!confirm('“' + dp.title + '” 글을 삭제할까요? GitHub에서 파일이 삭제됩니다.')) return;
+        showToast('삭제 중…');
+        ghDeleteFile(urlToPath(dp.url), 'delete: ' + dp.title)
+          .then(function () { if (drow) drow.remove(); showToast('삭제됐어요 — 곧 반영됩니다'); })
+          .catch(function (ex) { showToast('삭제 실패: ' + ex.message); });
         return;
       }
       if (e.target.closest('[data-rowedit]')) {
@@ -519,9 +542,16 @@
       editPost(findPostByUrl(vp.getAttribute('data-url')));
     });
 
-    /* delete (static notice) */
+    /* delete → GitHub에서 글 파일 삭제 (관리자만) */
     var del = $('#post-del-btn');
-    if (del) del.addEventListener('click', function () { showToast('정적 사이트에서는 글 삭제를 GitHub 저장소에서 진행해요'); });
+    if (del) del.addEventListener('click', function () {
+      if (!isOwnerLoggedIn()) { showToast('관리자로 로그인해야 삭제할 수 있어요'); return; }
+      if (!confirm('이 글을 삭제할까요?\nGitHub에서 파일이 삭제되고 사이트에서 사라집니다.')) return;
+      showToast('삭제 중…');
+      ghDeleteFile(urlToPath(vp.getAttribute('data-url')), 'delete: ' + (vp.getAttribute('data-title') || ''))
+        .then(function () { showToast('삭제됐어요 — 곧 사이트에 반영됩니다'); setTimeout(function () { location.href = BASE + '/'; }, 1300); })
+        .catch(function (e) { showToast('삭제 실패: ' + e.message); });
+    });
 
     /* TOC from headings */
     var tocLinks = $('#toc-links'), toc = $('#toc');
@@ -557,9 +587,10 @@
       }
     }
 
-    /* 조회수: goatcounter 우선(있으면), 없으면 워커 KV(countViews) 처리 */
+    /* 조회수: 워커(DO/KV) 우선 — countViews()가 채움. 워커 없으면 goatcounter, 그것도 없으면 숨김 */
     var hits = $('#page-hits'); var viewsWrap = $('.stat-views');
-    if (hits && hits.getAttribute('data-gc')) {
+    var hasWorker = !!((window.AUTH || {}).oauthUrl);
+    if (hits && !hasWorker && hits.getAttribute('data-gc')) {
       if (viewsWrap) viewsWrap.hidden = false;
       var code = hits.getAttribute('data-gc');
       var gurl = 'https://' + code + '.goatcounter.com/counter/' + encodeURIComponent(location.pathname) + '.json';
@@ -567,8 +598,8 @@
       x.onerror = function () { hits.textContent = '0'; };
       x.onload = function () { try { hits.textContent = JSON.parse(x.responseText).count; } catch (e) { hits.textContent = '0'; } };
       x.send();
-    } else if (hits && !((window.AUTH || {}).oauthUrl) && viewsWrap) {
-      viewsWrap.hidden = true;   // 카운터 미설정 → views 숨김
+    } else if (hits && !hasWorker && viewsWrap) {
+      viewsWrap.hidden = true;
     }
 
     /* giscus */
@@ -621,12 +652,6 @@
       syncGiscusTheme(giscusTheme());
     });
 
-    // 로그인 드롭다운: 바깥 클릭 시 닫기
-    document.addEventListener('click', function (e) {
-      var menu = $('#tb-auth-menu');
-      if (menu && !menu.hidden && !e.target.closest('#tb-auth-wrap')) menu.hidden = true;
-    });
-
     var sb = $('#sidebar'), scrim = $('#scrim'), hamb = $('#hamb');
     function closeDrawer() { if (sb) sb.classList.remove('open'); if (scrim) scrim.classList.remove('show'); }
     if (hamb) hamb.addEventListener('click', function () { if (sb) sb.classList.add('open'); if (scrim) scrim.classList.add('show'); });
@@ -634,9 +659,9 @@
     // close drawer when navigating via sidebar link on mobile
     if (sb) sb.addEventListener('click', function (e) { if (e.target.closest('a') && window.innerWidth <= 940) setTimeout(closeDrawer, 50); });
 
-    // sidebar 총 방문: goatcounter 우선 (없으면 워커는 countViews()가 처리)
+    // sidebar 총 방문: 워커 우선(countViews가 처리). 워커 없을 때만 goatcounter total
     var sh = $('#site-hits');
-    if (sh && sh.getAttribute('data-gc')) {
+    if (sh && !((window.AUTH || {}).oauthUrl) && sh.getAttribute('data-gc')) {
       var code = sh.getAttribute('data-gc');
       var url = 'https://' + code + '.goatcounter.com/counter/TOTAL.json';
       var x = new XMLHttpRequest(); x.open('GET', url);
@@ -646,9 +671,8 @@
     }
   }
 
-  /* 워커 KV 조회수: 페이지당 1회 호출 → 글 조회수 + 총 방문 동시 갱신 */
+  /* 워커 조회수(DO/KV): 페이지당 1회 호출 → 글 조회수 + 총 방문 동시 갱신 */
   function countViews() {
-    if (document.querySelector('[data-gc]')) return;   // goatcounter 사용 중이면 워커 건너뜀
     var ou = ((window.AUTH || {}).oauthUrl || '').replace(/\/$/, '');
     if (!ou) return;
     fetch(ou + '/views?path=' + encodeURIComponent(location.pathname))
@@ -667,6 +691,7 @@
   ready(function () {
     renderSidebar();
     renderAuthBtn();
+    bindLoginModal();
     bindSidebar();
     bindGlobal();
     bindSearch();
