@@ -1,0 +1,8 @@
+<script>
+window.AUTH = {
+  repo: "{{ site.github_repo }}",
+  branch: "{{ site.github_branch | default: 'main' }}",
+  ownerLogin: "{{ site.github_username }}",
+  oauthUrl: "{{ site.oauth_url }}"
+};
+</script>

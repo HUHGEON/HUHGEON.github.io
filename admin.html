@@ -1,0 +1,216 @@
+---
+layout: null
+sitemap: false
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+{% include auth_config.html %}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Admin · HUHGEON's Blog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/assets/css/blog.css">
+</head>
+<body>
+<div class="scrim" id="scrim"></div>
+
+<div class="app">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-head">
+      <div class="sb-prompt"><b>huhgeon</b>@blog<span class="dim">:</span><span class="tilde">~</span>$<span class="cursor"></span></div>
+      <a class="sb-id" href="/" aria-label="블로그로">
+        <span class="sb-ava"><img src="/assets/img/me.jpg" alt="profile"></span>
+        <div>
+          <div class="sb-name">HUHGEON's Blog</div>
+          <div class="sb-desc">owner workspace · 로컬 전용</div>
+        </div>
+      </a>
+    </div>
+
+    <button class="sb-write" data-go="write">
+      <svg viewBox="0 0 512 512"><path d="M362.7 19.3L314.3 67.7 444.3 197.7l48.4-48.4c25-25 25-65.5 0-90.5L453.3 19.3c-25-25-65.5-25-90.5 0zm-71 71L58.6 323.5c-10.4 10.4-18 23.3-22.2 37.4L1 481.2C-1.5 489.7 .8 498.8 7 505s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L421.7 220.3 291.7 90.3z"/></svg>
+      새 글 쓰기
+    </button>
+    <button class="sb-manage" data-go="manage">
+      <svg viewBox="0 0 512 512"><path d="M495 280c8.6-7.2 13-18.2 11.5-29.3-1.2-9.2-2.9-18.2-5.1-27l-23.2 4.7c-9.7-37.9-32-71-62.2-94.6l13.1-19.8c-7-6.1-14.5-11.7-22.4-16.7l-13.1 19.8c-33.3-18.9-72.5-27.2-111.5-22.7l-2.7-23.7c-9 1-17.9 2.7-26.6 4.9l5.5 23.3c-37.7 9.9-70.6 32.4-94 63l-19.5-13.4c-6 7.1-11.5 14.7-16.4 22.6l19.8 12.6c-18.5 33.3-26.6 72.2-22.2 110.9l-23.7 2.6c1 9 2.7 17.9 5 26.6l23.3-5.4c9.7 37.7 32.2 70.7 62.8 94.1l-13.4 19.6c7 6 14.5 11.6 22.4 16.5l13-19.7c33.4 18.7 72.6 26.8 111.6 22.2l2.7 23.7c8.9-1 17.8-2.7 26.5-4.9l-5.5-23.4c37.6-9.9 70.4-32.3 93.8-62.7l19.7 13.5c6-7 11.6-14.5 16.5-22.4l-19.7-13zM256 336a80 80 0 1 1 0-160 80 80 0 1 1 0 160z"/></svg>
+      카테고리·태그 관리
+    </button>
+
+    <nav class="nav">
+      <div class="nav-label">~/ 탐색</div>
+      <a class="nav-item" href="/">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h14V10"></path></svg></span>
+        ← 블로그로 돌아가기
+      </a>
+
+      <div class="nav-label">~/ 카테고리</div>
+      <div id="nav-cats"></div>
+
+      <div class="nav-label">~/ 인기 태그</div>
+      <div class="nav-tags" id="nav-tags"></div>
+    </nav>
+
+    <div class="sb-foot">
+      <span class="owner-flag mono">● owner mode</span>
+      <span>로컬 작성 보조툴 — 빌드/검색 미포함</span>
+      <span>© 2026 HUHGEON · built with Jekyll</span>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <header class="topbar">
+      <button class="icon-btn hamb" id="hamb" aria-label="menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"></path></svg>
+      </button>
+      <div class="crumb"><a href="/">Blog</a><span class="sep">/</span><span class="cur">Admin</span></div>
+      <div class="tb-spacer"></div>
+      <button class="icon-btn" id="theme" aria-label="theme">
+        <svg viewBox="0 0 384 512"><path d="M223.5 32C100 32 0 132.3 0 256S100 480 223.5 480c60.6 0 115.5-24.2 155.8-63.4 5-4.9 6.3-12.5 3.1-18.7s-10.1-9.7-17-8.5c-9.8 1.7-19.8 2.6-30.1 2.6-96.9 0-175.5-78.8-175.5-176 0-65.8 36-123.1 89.3-153.3 6.1-3.5 9.2-10.5 7.7-17.3s-7.3-11.9-14.3-12.5c-6.3-.5-12.6-.8-19-.8z"></path></svg>
+      </button>
+    </header>
+
+    <!-- ========== EDITOR ========== -->
+    <section class="view editor" id="view-editor">
+      <div class="editor">
+        <div class="ed-bar">
+          <div class="ed-path"><span class="dim">~/_pages/</span><span class="file" id="ed-file">untitled.md</span></div>
+          <div class="ed-status"><span class="dot"></span> 로컬 미리보기</div>
+          <div class="ed-actions">
+            <a class="btn-ghost" href="/"><svg viewBox="0 0 448 512"><path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"></path></svg><span>나가기</span></a>
+            <button class="btn-ghost" id="ed-gh"><svg viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3 .3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5 .3-6.2 2.3zm44.2-1.7c-2.9 .7-4.9 2.6-4.6 4.9 .3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8z"></path></svg><span id="ed-gh-label">GitHub 로그인</span></button>
+            <button class="btn-primary" id="ed-publish"><svg viewBox="0 0 512 512"><path d="M498.1 5.6c10.1 7 15.4 19.1 13.5 31.2l-64 416c-1.5 9.7-7.4 18.2-16 23s-18.9 5.4-28 1.6L284 427.7l-68.5 74.1c-8.9 9.6-22.9 12.9-35.2 8.1S160 493.2 160 480l0-83.6c0-4 1.5-7.8 4.2-10.8L331.8 202.8c5.8-6.3 5.6-16-.4-22s-15.7-6.4-22-.7L106 360.8 17.7 316.6C7.1 311.3 .3 300.7 0 288.9s5.9-22.8 16.1-28.7l448-256c10.7-6.1 23.9-5.5 34 1.4z"></path></svg>발행하기</button>
+          </div>
+        </div>
+
+        <div class="ed-tabs">
+          <button class="ed-tab on" data-tab="write">편집</button>
+          <button class="ed-tab" data-tab="preview">미리보기</button>
+        </div>
+
+        <div class="ed-split">
+          <div class="ed-pane write shown">
+            <div class="ed-pane-label"><span class="lv">●</span> EDIT · Markdown</div>
+            <div class="ed-fields">
+              <input class="ed-title" id="ed-title" placeholder="제목을 입력하세요" value="">
+              <div class="ed-metarow">
+                <select class="ed-input" id="ed-cat"></select>
+                <input class="ed-input ed-tagrow" id="ed-tags" placeholder="태그 (쉼표로 구분)" value="">
+              </div>
+            </div>
+            <div class="ed-divider"></div>
+            <div class="ed-toolbar">
+              <button class="ed-tool" data-md="h2" title="제목2">H2</button>
+              <button class="ed-tool" data-md="h3" title="제목3">H3</button>
+              <button class="ed-tool" data-md="bold" title="굵게"><b>B</b></button>
+              <button class="ed-tool" data-md="italic" title="기울임"><i>I</i></button>
+              <button class="ed-tool" data-md="quote" title="인용">&ldquo;</button>
+              <button class="ed-tool" data-md="code" title="인라인 코드">&lt;/&gt;</button>
+              <button class="ed-tool" data-md="codeblock" title="코드블록"><svg viewBox="0 0 640 512"><path d="M392.8 1.2c-17-4.9-34.7 5-39.6 22l-128 448c-4.9 17 5 34.7 22 39.6s34.7-5 39.6-22l128-448c4.9-17-5-34.7-22-39.6zm80.6 120.1c-12.5 12.5-12.5 32.8 0 45.3L562.7 256l-89.4 89.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l112-112c12.5-12.5 12.5-32.8 0-45.3l-112-112c-12.5-12.5-32.8-12.5-45.3 0zm-306.7 0c-12.5-12.5-32.8-12.5-45.3 0l-112 112c-12.5 12.5-12.5 32.8 0 45.3l112 112c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256l89.4-89.4c12.5-12.5 12.5-32.8 0-45.3z"></path></svg></button>
+              <button class="ed-tool" data-md="list" title="목록">≔</button>
+              <button class="ed-tool" data-md="link" title="링크"><svg viewBox="0 0 640 512"><path d="M579.8 267.7c56.5-56.5 56.5-148 0-204.5s-148-56.5-204.5 0l-49.3 49.3c-7.5 7.5-7.5 19.8 0 27.3s19.8 7.5 27.3 0l49.3-49.3c41.5-41.5 108.8-41.5 150.3 0s41.5 108.8 0 150.3l-49.3 49.3c-7.5 7.5-7.5 19.8 0 27.3s19.8 7.5 27.3 0l49.3-49.3zM48.2 244.3c-56.5 56.5-56.5 148 0 204.5s148 56.5 204.5 0l49.3-49.3c7.5-7.5 7.5-19.8 0-27.3s-19.8-7.5-27.3 0l-49.3 49.3c-41.5 41.5-108.8 41.5-150.3 0s-41.5-108.8 0-150.3l49.3-49.3c7.5-7.5 7.5-19.8 0-27.3s-19.8-7.5-27.3 0l-49.3 49.3zM379.3 158.6c-7.5-7.5-19.8-7.5-27.3 0L158.6 352c-7.5 7.5-7.5 19.8 0 27.3s19.8 7.5 27.3 0L379.3 185.9c7.5-7.5 7.5-19.8 0-27.3z"></path></svg></button>
+              <button class="ed-tool" data-md="image" title="이미지"><svg viewBox="0 0 512 512"><path d="M0 96C0 60.7 28.7 32 64 32H448c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM323.8 202.5c-4.5-6.6-11.9-10.5-19.8-10.5s-15.4 3.9-19.8 10.5l-87 127.6L170.7 297c-4.6-5.7-11.5-9-18.7-9s-14.2 3.3-18.7 9l-64 80c-5.8 7.2-6.9 17.1-2.9 25.4s12.4 13.6 21.6 13.6h96 32H424c8.9 0 17.1-4.9 21.2-12.8s3.6-17.4-1.4-24.7l-120-176zM112 192a48 48 0 1 0 0-96 48 48 0 1 0 0 96z"></path></svg></button>
+            </div>
+            <div class="ed-hint"><svg viewBox="0 0 512 512"><path d="M0 96C0 60.7 28.7 32 64 32H448c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM323.8 202.5c-4.5-6.6-11.9-10.5-19.8-10.5s-15.4 3.9-19.8 10.5l-87 127.6L170.7 297c-4.6-5.7-11.5-9-18.7-9s-14.2 3.3-18.7 9l-64 80c-5.8 7.2-6.9 17.1-2.9 25.4s12.4 13.6 21.6 13.6h96 32H424c8.9 0 17.1-4.9 21.2-12.8s3.6-17.4-1.4-24.7l-120-176zM112 192a48 48 0 1 0 0-96 48 48 0 1 0 0 96z"></path></svg>이미지를 끌어다 놓거나 붙여넣으면 본문에 바로 등록돼요 (발행 시 첫 이미지가 대표 이미지)</div>
+            <textarea class="ed-area" id="ed-area" spellcheck="false" placeholder="여기에 마크다운으로 작성하세요…"></textarea>
+          </div>
+
+          <div class="ed-pane preview">
+            <div class="ed-pane-label"><span class="lv">▶</span> PREVIEW · 실시간</div>
+            <div class="ed-preview">
+              <div class="content">
+                <div class="post-hero">
+                  <div class="cat" id="pv-cat">Uncategorized</div>
+                  <h1 id="pv-title">제목 없음</h1>
+                  <div class="post-byline">
+                    <img src="/assets/img/me.jpg" alt="">
+                    <div>
+                      <div class="who">HUHGEON</div>
+                      <div class="when" id="pv-date">방금</div>
+                    </div>
+                  </div>
+                  <div class="post-tags" id="pv-tags"></div>
+                </div>
+                <div class="prose" id="ed-prose"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== MANAGE ========== -->
+    <section class="view manage" id="view-manage">
+      <div class="content">
+        <div class="home-head">
+          <div class="cmd"><b>$</b> manage <span class="flag">--categories --tags</span></div>
+          <h1>카테고리 · 태그 관리</h1>
+          <p class="sub">카테고리·세부 카테고리를 추가·삭제·이름변경하고, 태그는 추가하거나 드래그로 순서를 바꿀 수 있어요. 변경사항은 글쓰기 선택·사이드바에 바로 반영되고 이 브라우저에 자동 저장됩니다.</p>
+        </div>
+
+        <div class="manage-grid">
+          <section class="mg-card">
+            <div class="mg-head">
+              <h3>카테고리</h3>
+              <button class="mg-add" id="mg-add-cat">+ 카테고리 추가</button>
+            </div>
+            <div class="mg-tree" id="mg-tree"></div>
+          </section>
+
+          <section class="mg-card">
+            <div class="mg-head">
+              <h3>태그</h3>
+              <span class="mg-hint">⠿ 드래그해서 순서 변경</span>
+            </div>
+            <div class="mg-tags" id="mg-tags"></div>
+            <form class="mg-tagform" id="mg-tagform">
+              <input class="ed-input" id="mg-taginput" placeholder="새 태그 입력 후 Enter" autocomplete="off">
+              <button class="mg-add" type="submit">추가</button>
+            </form>
+          </section>
+        </div>
+
+        <div class="mg-note">
+          <span class="nl">// note</span>
+          여기서 만든 구조는 실제 빌드 시 <code>_pages</code> 폴더 구조와 글의 <code>tags</code>로 옮겨집니다. 카테고리 = 폴더(<code>_pages/카테고리/세부/</code> 안에 <code>index.md</code>), 태그 = 글의 front matter <code>tags</code> 입니다.
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- 로그인 게이트 — 오너로 로그인하지 않으면 에디터/관리 잠금 -->
+<div class="auth-gate" id="auth-gate" hidden>
+  <div class="auth-card">
+    <span class="auth-ava"><img src="/assets/img/me.jpg" alt=""></span>
+    <h2 id="auth-title">오너 전용 작업실</h2>
+    <p id="auth-desc">글쓰기·관리·발행은 저장소 주인만 가능합니다. GitHub로 로그인하세요.</p>
+    <button class="btn-primary auth-login" id="auth-login">
+      <svg viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3 .3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5 .3-6.2 2.3zm44.2-1.7c-2.9 .7-4.9 2.6-4.6 4.9 .3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8z"></path></svg>
+      GitHub로 로그인
+    </button>
+    <a class="auth-back" href="/">← 블로그로 돌아가기</a>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="dot"></span> <span id="toast-msg"></span></div>
+
+{% include posts_data.html %}
+<script src="/assets/js/admin.js"></script>
+<script src="/assets/js/manage.js"></script>
+<script>
+  /* mobile drawer for admin */
+  (function () {
+    var sb = document.getElementById('sidebar'), scrim = document.getElementById('scrim'), hamb = document.getElementById('hamb');
+    if (hamb) hamb.addEventListener('click', function () { sb.classList.add('open'); scrim.classList.add('show'); });
+    if (scrim) scrim.addEventListener('click', function () { sb.classList.remove('open'); scrim.classList.remove('show'); });
+  })();
+</script>
+</body>
+</html>

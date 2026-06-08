@@ -1,7 +1,21 @@
 title: HUHGEON's Blog
 description: "기록하고 공유하는 개발 블로그"
 logo_img: "/assets/img/favicon.webp"
-profile_img: "/assets/img/profile.webp"
+profile_img: "/assets/img/me.jpg"
+
+# 작성자(오너) 정보 — byline / 댓글 본인 아바타 등에 사용
+author: HUHGEON
+prompt_user: huhgeon          # 사이드바 터미널 프롬프트 huhgeon@blog:~$
+default_thumbnail: "/assets/img/me.jpg"   # 썸네일 없을 때 기본 이미지
+
+# 글쓰기 에디터(admin) → GitHub 자동 커밋/푸시 대상
+github_repo: "HUHGEON/HUHGEON.github.io"
+github_branch: "master"
+
+# GitHub 로그인(OAuth) 브로커 — Cloudflare Worker 배포 후 그 주소를 넣으세요.
+# 비워두면 자동으로 PAT(토큰 붙여넣기) 방식으로 대체됩니다.
+# 예) https://hg-oauth.<your-subdomain>.workers.dev
+oauth_url: ""
 
 # Social Links (필요 없는 항목은 빈칸으로 두면 표시되지 않습니다)
 email: dbgmlwns@hs.ac.kr
@@ -34,6 +48,9 @@ plugins:
 
 exclude:
   - docs/
+  - design_handoff_huhgeon_blog/
+  - oauth-worker/
+  - README.md
 
 collections:
   pages:

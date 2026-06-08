@@ -3,59 +3,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>
     {% if page.url == "/index.html" %}
-        Home
+        {{ site.title }}
     {% elsif page_type == "category" %}
-        {{ category_title }}
+        {{ category_title }} · {{ site.title }}
     {% else %}
-        {{ page.title }}
+        {{ page.title }} · {{ site.title }}
     {% endif %}
 </title>
 {% seo %}
 
 <link rel="shortcut icon" type="image/png" href="{{ site.logo_img | prepend: site.baseurl }}">
-<style>
-@font-face {
-    font-family: 'Nunito Sans';
-    font-style: normal;
-    font-weight: 400;
-    font-display: optional;
-    src: local('Nunito Sans'),
-         url("{{ site.baseurl }}/assets/fonts/NunitoSans-Regular.woff2") format("woff2");
-}
 
-@font-face {
-    font-family: 'Righteous';
-    font-style: normal;
-    font-weight: 600;
-    font-display: optional;
-    src: local('Righteous'),
-         url("{{ site.baseurl }}/assets/fonts/Righteous-Regular.woff2") format("woff2");
-}
+<!-- Fonts: MinSans(본문/제목) + JetBrains Mono(메타/코드) + Pretendard(폴백) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap">
 
-@font-face {
-    font-family: 'Lato';
-    font-style: normal;
-    font-weight: 400;
-    font-display: optional;
-    src: local('Lato'),
-         url("{{ site.baseurl }}/assets/fonts/Lato-Regular.woff2") format("woff2");
-}
-</style>
-
-<script src="{{ '/assets/js/fontfaceobserver.js' | prepend: site.baseurl }}" type="text/javascript"></script>
-<script type="text/javascript">
-    const nunitoObserver = new FontFaceObserver('Nunito Sans');
-    const righteousObserver = new FontFaceObserver('Righteous');
-    const latoObserver = new FontFaceObserver('Lato');
-  
-    Promise.all([
-        nunitoObserver.load(),
-        righteousObserver.load(),
-        latoObserver.load(),
-    ]).then(function(){
-        document.documentElement.className += " fonts-loaded";
-    });
-</script>
+<link rel="stylesheet" href="{{ '/assets/css/blog.css' | prepend: site.baseurl }}">
 
 <meta name="baseurl" content="{{ site.baseurl }}">
 <meta

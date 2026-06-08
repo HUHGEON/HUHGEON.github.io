@@ -1,0 +1,24 @@
+{%- comment -%}
+  홈(최신글) 또는 카테고리/세부카테고리 목록 뷰.
+  실제 행/히어로/필터/페이지네이션은 blog.js 가 window.POSTS 로 렌더한다.
+  data-cat / data-sub 가 있으면 해당 카테고리로 필터된 목록을 그린다.
+{%- endcomment -%}
+{%- assign d_cat = "" -%}
+{%- assign d_sub = "" -%}
+{%- if page_level == 2 -%}
+    {%- assign d_cat = page_tree[0] -%}
+{%- elsif page_level >= 3 -%}
+    {%- assign d_cat = page_tree[0] -%}
+    {%- assign d_sub = page_tree[1] -%}
+{%- endif -%}
+<section class="view active" id="view-home"
+    {% if d_cat != "" %}data-cat="{{ d_cat | xml_escape }}"{% endif %}
+    {% if d_sub != "" %}data-sub="{{ d_sub | xml_escape }}"{% endif %}>
+    <div class="content" id="home-content">
+        <div class="home-head">
+            <div class="cmd"><b>$</b> ls -la ~/posts <span class="flag">--sort=date</span></div>
+            <h1>최신글</h1>
+            <p class="sub">불러오는 중…</p>
+        </div>
+    </div>
+</section>

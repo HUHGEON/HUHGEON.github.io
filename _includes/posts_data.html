@@ -1,0 +1,55 @@
+{%- comment -%}
+  모든 블로그 글(카테고리 폴더 하위의 .md)을 window.POSTS 로,
+  카테고리 폴더 구조(index.md)를 window.CAT_NODES 로 주입한다.
+  블로그 글 판정: title 존재 + 파일명 != index.md + _pages 기준 깊이 >= 2
+{%- endcomment -%}
+{%- assign sorted_pages = site.pages | sort: 'date' | reverse -%}
+<script>
+window.SITE = { baseurl: {{ site.baseurl | jsonify }}, author: {{ site.author | default: "HUHGEON" | jsonify }}, profile: {{ site.profile_img | prepend: site.baseurl | jsonify }}, defaultThumb: {{ site.default_thumbnail | default: '/assets/img/me.jpg' | prepend: site.baseurl | jsonify }} };
+window.POSTS = [
+{%- for p in sorted_pages -%}
+  {%- assign tree = p.path | remove_first: "_pages/" | split: "/" -%}
+  {%- assign last = tree | last -%}
+  {%- assign depth = tree | size -%}
+  {%- if p.title and last != "index.md" and depth >= 2 -%}
+    {%- assign cat = tree[0] -%}
+    {%- assign sub = "" -%}
+    {%- if depth >= 3 -%}{%- assign sub = tree[1] -%}{%- endif -%}
+    {%- assign thumb = p.thumbnail -%}
+    {%- if thumb -%}
+      {%- assign chk = thumb | split: '/' -%}
+      {%- if chk[0] == '' -%}{%- assign thumb = thumb | prepend: site.baseurl -%}{%- endif -%}
+    {%- endif -%}
+    {%- assign words = p.content | number_of_words -%}
+    {%- assign mins = words | divided_by: 200 | plus: 1 -%}
+    {%- assign datestr = p.date | date: "%Y.%m.%d" -%}
+    {
+      "title": {{ p.title | jsonify }},
+      "url": {{ p.url | prepend: site.baseurl | jsonify }},
+      "cat": {{ cat | jsonify }},
+      "sub": {{ sub | jsonify }},
+      "tags": {{ p.tags | jsonify }},
+      "date": {{ datestr | jsonify }},
+      "read": {{ mins | append: "분" | jsonify }},
+      "excerpt": {{ p.content | markdownify | strip_html | normalize_whitespace | truncate: 110 | jsonify }},
+      "thumb": {% if thumb %}{{ thumb | jsonify }}{% else %}""{% endif %},
+      "bookmark": {% if p.bookmark %}true{% else %}false{% endif %},
+      "body": {{ p.content | jsonify }}
+    }{%- unless forloop.last -%},{%- endunless -%}
+  {%- endif -%}
+{%- endfor -%}
+];
+window.CAT_NODES = [
+{%- assign idx_pages = site.pages | sort: 'url' -%}
+{%- for p in idx_pages -%}
+  {%- assign tree = p.path | remove_first: "_pages/" | split: "/" -%}
+  {%- assign last = tree | last -%}
+  {%- assign depth = tree | size -%}
+  {%- if last == "index.md" and depth == 2 -%}
+    { "cat": {{ tree[0] | jsonify }}, "sub": "", "url": {{ p.url | remove: 'index.html' | prepend: site.baseurl | jsonify }} },
+  {%- elsif last == "index.md" and depth == 3 -%}
+    { "cat": {{ tree[0] | jsonify }}, "sub": {{ tree[1] | jsonify }}, "url": {{ p.url | remove: 'index.html' | prepend: site.baseurl | jsonify }} },
+  {%- endif -%}
+{%- endfor -%}
+];
+</script>
