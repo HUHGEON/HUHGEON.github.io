@@ -274,6 +274,7 @@
     }
   }
   function cssEsc(s) { return String(s).replace(/"/g, '\\"'); }
+  function setCrumb(html) { var c = $('#crumb'); if (c) c.innerHTML = html; }
 
   /* ============================================================
      HOME / category / full-list / tag views
@@ -389,10 +390,15 @@
     var hash = location.hash || '';
     var mTag = hash.match(/^#tag=(.+)$/);
     var mAll = hash.match(/^#all(?:\/(\d+))?$/);
-    if (cat) { renderFiltered(root, cat, sub); }
-    else if (mTag) { renderTag(root, decodeURIComponent(mTag[1])); }
-    else if (mAll) { renderAll(root, mAll[1] ? +mAll[1] : 1); }
-    else { renderHome(root); }
+    var blog = '<a href="' + BASE + '/">Blog</a><span class="sep">/</span>';
+    if (cat) {
+      renderFiltered(root, cat, sub);
+      if (sub) setCrumb(blog + '<a href="' + BASE + '/' + encodeURIComponent(cat) + '/">' + esc(cat) + '</a><span class="sep">/</span><span class="cur">' + esc(sub) + '</span>');
+      else setCrumb(blog + '<span class="cur">' + esc(cat) + '</span>');
+    }
+    else if (mTag) { var tg = decodeURIComponent(mTag[1]); renderTag(root, tg); setCrumb(blog + '<span class="cur">#' + esc(tg) + '</span>'); }
+    else if (mAll) { renderAll(root, mAll[1] ? +mAll[1] : 1); setCrumb(blog + '<span class="cur">전체 글</span>'); }
+    else { renderHome(root); setCrumb(blog + '<span class="cur">최신글</span>'); }
     window.scrollTo(0, 0);
     markActiveNav();
   }
