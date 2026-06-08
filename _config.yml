@@ -23,6 +23,9 @@ google_analytics:
 # Otherwise, set its value as "/<repo-name>". ex) baseurl: /myblog
 baseurl:
 
+# 사이트 주소 (검색엔진 노출/sitemap/SEO에 필수)
+url: "https://HUHGEON.github.io"
+
 # Build settings
 plugins:
   - jekyll-feed
