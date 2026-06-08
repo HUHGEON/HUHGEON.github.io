@@ -307,6 +307,25 @@
     }
     window.__ghPutFile = githubPutFile; window.__ghConf = ghConf; window.__ghToken = ghToken;
 
+    /* 카테고리 관리용: 디렉터리 목록 / 파일 조회 / 삭제 */
+    function ghHeaders(token) { return { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' }; }
+    function ghListDir(conf, token, path) {
+      return fetch(ghApiUrl(conf, path) + '?ref=' + encodeURIComponent(conf.branch), { headers: ghHeaders(token) })
+        .then(function (r) { if (r.status === 404) return []; if (!r.ok) throw new Error('LIST ' + r.status); return r.json(); });
+    }
+    function ghGetFile(conf, token, path) {
+      return fetch(ghApiUrl(conf, path) + '?ref=' + encodeURIComponent(conf.branch), { headers: ghHeaders(token) })
+        .then(function (r) { if (!r.ok) throw new Error('GET ' + r.status); return r.json(); });
+    }
+    function ghDeleteFile2(conf, token, path, sha, message) {
+      return fetch(ghApiUrl(conf, path), { method: 'DELETE', headers: ghHeaders(token),
+        body: JSON.stringify({ message: message, sha: sha, branch: conf.branch }) })
+        .then(function (r) { if (r.status === 200) return r.json(); return r.json().catch(function () { return {}; }).then(function (e) { throw new Error(e.message || ('DEL ' + r.status)); }); });
+    }
+    function b64decodeUtf8(s) { try { return decodeURIComponent(escape(atob((s || '').replace(/\n/g, '')))); } catch (e) { return ''; } }
+    window.__ghListDir = ghListDir; window.__ghGetFile = ghGetFile; window.__ghDeleteFile = ghDeleteFile2; window.__b64decode = b64decodeUtf8;
+    window.__pub = { show: showPub, update: updatePub, hide: hidePub };
+
     // 커밋 SHA의 Actions 배포가 끝나면 글로 이동 (새 글·수정 모두 정확)
     function pollDeploy(sha, postUrl) {
       var conf = ghConf(), token = ghToken();

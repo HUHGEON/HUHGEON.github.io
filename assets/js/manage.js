@@ -83,6 +83,8 @@
   ready(function () {
     var $ = function (s) { return document.querySelector(s); };
     model = load();
+    // 적용(완료) 시 실제 GitHub 변경분을 계산하기 위한 시작 상태 스냅샷
+    var baseline = JSON.parse(JSON.stringify(model));
 
     var navCats = $('#nav-cats'), navTags = $('#nav-tags'),
         mgTree = $('#mg-tree'), mgTags = $('#mg-tags'),
@@ -188,8 +190,7 @@
             c.children = c.children || [];
             if (c.children.some(function (x) { return x.name === sname; })) { alert('이미 있는 세부 카테고리예요'); return; }
             c.children.push({ id: uid(), name: sname, count: 0 });
-            renderAll();
-            pushCategoryFolder(c.name, sname);
+            renderAll();   // 로컬 편집만 — 실제 반영은 "완료" 버튼
           }
           return;
         }
@@ -220,8 +221,7 @@
       if (!name) return;
       if (model.categories.some(function (c) { return c.name === name; })) { alert('이미 있는 카테고리예요'); return; }
       model.categories.push({ id: uid(), name: name, count: 0, children: [] });
-      renderAll();
-      pushCategoryFolder(name, null);
+      renderAll();   // 로컬 편집만 — 실제 반영은 "완료" 버튼
     });
 
     /* ---------- tag interactions ---------- */
@@ -288,6 +288,117 @@
     });
     var navAll = document.getElementById('nav-all');
     if (navAll) navAll.addEventListener('click', function () { if (window.__filter) window.__filter(null); });
+
+    /* ---------- "완료": 로컬 편집을 GitHub에 일괄 반영 ---------- */
+    function urlToRepoPath(url) {
+      var u = (url || '').replace(/^\//, '').replace(/\.html$/, '.md');
+      u = u.split('/').map(function (s) { try { return decodeURIComponent(s); } catch (e) { return s; } }).join('/');
+      return '_pages/' + u;
+    }
+    function escRe(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+    function removeTagLine(content, tag) {
+      var lines = content.split('\n'), out = [], fm = 0;
+      var re = new RegExp('^\\s*-\\s*' + escRe(tag) + '\\s*$');
+      for (var i = 0; i < lines.length; i++) {
+        if (/^---\s*$/.test(lines[i])) { fm++; out.push(lines[i]); continue; }
+        if (fm === 1 && re.test(lines[i])) continue;   // front matter 안 해당 태그 줄 제거
+        out.push(lines[i]);
+      }
+      return out.join('\n');
+    }
+    function computeOps() {
+      var moves = [], deletes = [], creates = [], tagDeletes = [], delPosts = 0;
+      var posts = window.POSTS || [], baseCat = {}, modCat = {};
+      baseline.categories.forEach(function (c) { baseCat[c.id] = c; });
+      model.categories.forEach(function (c) { modCat[c.id] = c; });
+      function postsIn(cat, sub) { return posts.filter(function (p) { return p.cat === cat && (sub ? p.sub === sub : true); }).length; }
+      model.categories.forEach(function (c) {
+        var b = baseCat[c.id];
+        if (!b) { creates.push('_pages/' + c.name); (c.children || []).forEach(function (ch) { creates.push('_pages/' + c.name + '/' + ch.name); }); return; }
+        if (b.name !== c.name) moves.push({ from: '_pages/' + b.name, to: '_pages/' + c.name });
+        var baseSub = {}; (b.children || []).forEach(function (s) { baseSub[s.id] = s; });
+        (c.children || []).forEach(function (ch) {
+          var bs = baseSub[ch.id];
+          if (!bs) creates.push('_pages/' + c.name + '/' + ch.name);
+          else if (bs.name !== ch.name) moves.push({ from: '_pages/' + c.name + '/' + bs.name, to: '_pages/' + c.name + '/' + ch.name });
+        });
+        (b.children || []).forEach(function (bs) {
+          if (!(c.children || []).some(function (s) { return s.id === bs.id; })) { deletes.push('_pages/' + c.name + '/' + bs.name); delPosts += postsIn(b.name, bs.name); }
+        });
+      });
+      baseline.categories.forEach(function (b) { if (!modCat[b.id]) { deletes.push('_pages/' + b.name); delPosts += postsIn(b.name, null); } });
+      baseline.tags.forEach(function (t) { if (model.tags.indexOf(t) === -1) tagDeletes.push(t); });
+      return { moves: moves, deletes: deletes, creates: creates, tagDeletes: tagDeletes, delPosts: delPosts,
+        total: moves.length + deletes.length + creates.length + tagDeletes.length };
+    }
+    function listAllFiles(conf, token, dir) {
+      return window.__ghListDir(conf, token, dir).then(function (items) {
+        var files = [], dirs = [];
+        (items || []).forEach(function (it) { if (it.type === 'file') files.push({ path: it.path, sha: it.sha }); else if (it.type === 'dir') dirs.push(it.path); });
+        return dirs.reduce(function (p, d) { return p.then(function (acc) { return listAllFiles(conf, token, d).then(function (s) { return acc.concat(s); }); }); }, Promise.resolve(files));
+      });
+    }
+    function createIndex(conf, token, dir, oc) { return window.__ghPutFile(conf, token, dir + '/index.md', '---\n---\n', 'add category: ' + dir).then(oc); }
+    function deleteFolder(conf, token, base, oc) {
+      return listAllFiles(conf, token, base).then(function (files) {
+        return files.reduce(function (p, f) { return p.then(function () { return window.__ghDeleteFile(conf, token, f.path, f.sha, 'delete: ' + f.path).then(oc); }); }, Promise.resolve());
+      });
+    }
+    function moveFolder(conf, token, oldBase, newBase, oc) {
+      return listAllFiles(conf, token, oldBase).then(function (files) {
+        return files.reduce(function (p, f) {
+          return p.then(function () {
+            return window.__ghGetFile(conf, token, f.path).then(function (g) {
+              var content = window.__b64decode(g.content), newPath = newBase + f.path.slice(oldBase.length);
+              return window.__ghPutFile(conf, token, newPath, content, 'move: ' + newPath).then(oc)
+                .then(function () { return window.__ghDeleteFile(conf, token, f.path, f.sha, 'move del: ' + f.path).then(oc); });
+            });
+          });
+        }, Promise.resolve());
+      });
+    }
+    function removeTag(conf, token, tag, oc) {
+      var affected = (window.POSTS || []).filter(function (p) { return (p.tags || []).indexOf(tag) > -1; });
+      return affected.reduce(function (p, post) {
+        return p.then(function () {
+          var path = urlToRepoPath(post.url);
+          return window.__ghGetFile(conf, token, path).then(function (g) {
+            var content = window.__b64decode(g.content), nc = removeTagLine(content, tag);
+            if (nc === content) return null;
+            return window.__ghPutFile(conf, token, path, nc, 'remove tag #' + tag).then(oc);
+          });
+        });
+      }, Promise.resolve());
+    }
+    function applyChanges() {
+      if (!window.__ghToken || !window.__ghToken() || !window.__ghConf) { alert('먼저 GitHub로 로그인하세요'); return; }
+      var ops = computeOps();
+      if (ops.total === 0) { (window.__toast || alert)('변경사항이 없어요'); return; }
+      if (ops.delPosts > 0 && !confirm('삭제되는 카테고리에 글 ' + ops.delPosts + '개도 함께 삭제됩니다.\n계속할까요?')) return;
+      var conf = window.__ghConf(), token = window.__ghToken(), pub = window.__pub;
+      var lastSha = '';
+      function oc(res) { if (res && res.commit && res.commit.sha) lastSha = res.commit.sha; }
+      var steps = [];
+      ops.moves.slice().sort(function (a, b) { return a.from.split('/').length - b.from.split('/').length; })
+        .forEach(function (m) { steps.push(function () { return moveFolder(conf, token, m.from, m.to, oc); }); });
+      ops.deletes.forEach(function (d) { steps.push(function () { return deleteFolder(conf, token, d, oc); }); });
+      ops.creates.forEach(function (c) { steps.push(function () { return createIndex(conf, token, c, oc); }); });
+      ops.tagDeletes.forEach(function (t) { steps.push(function () { return removeTag(conf, token, t, oc); }); });
+      if (pub) pub.show('카테고리 반영 중…', 'GitHub에 적용하고 있어요');
+      var done = 0;
+      steps.reduce(function (p, fn) {
+        return p.then(fn).then(function () { done++; if (pub) pub.update('카테고리 반영 중… (' + done + '/' + steps.length + ')', ''); });
+      }, Promise.resolve())
+        .then(function () {
+          if (pub) pub.update('배포 중…', '빌드되면 자동으로 새로고침돼요 (보통 1~2분)');
+          var home = ((window.SITE && window.SITE.baseurl) || '') + '/';
+          if (lastSha && window.__pollDeploy) window.__pollDeploy(lastSha, home);
+          else setTimeout(function () { location.href = home; }, 90000);
+        })
+        .catch(function (e) { if (pub) pub.hide(); (window.__toast || alert)('적용 실패: ' + (e && e.message || e)); });
+    }
+    var applyBtn = $('#mg-apply');
+    if (applyBtn) applyBtn.addEventListener('click', applyChanges);
 
     /* ---------- initial paint ---------- */
     renderAll();
