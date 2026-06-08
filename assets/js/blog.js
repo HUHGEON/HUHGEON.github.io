@@ -316,7 +316,7 @@
 
   function renderHome(root) {
     var feat = featuredPost();
-    var rest = POSTS.filter(function (p) { return p.url !== (feat ? feat.url : null); });
+    var recent = POSTS.slice(0, 5);   // 최근 5개 (북마크 글도 제외하지 않고 포함)
     var tags = tagCounts().slice(0, 5);
     var chips = '<button class="chip on" data-tag="">all</button>' +
       tags.map(function (t) { return '<button class="chip" data-tag="' + escAttr(t.tag) + '">' + esc(t.tag) + '</button>'; }).join('');
@@ -328,9 +328,9 @@
       '</div>' +
       (feat ? heroMarkup(feat) : '') +
       '<div class="filters">' + chips + '</div>' +
-      '<div class="sec-head"><h3>최근 글</h3><span class="n">' + POSTS.length + ' posts</span>' +
+      '<div class="sec-head"><h3>최근 글</h3><span class="n">' + recent.length + ' / ' + POSTS.length + '</span>' +
         '<a class="more" href="' + BASE + '/#all" id="see-all">모두 보기 →</a></div>' +
-      '<div class="rows" id="rows">' + rest.map(function (p, k) { return rowMarkup(p, k + 1); }).join('') + '</div>';
+      '<div class="rows" id="rows">' + recent.map(function (p, k) { return rowMarkup(p, k + 1); }).join('') + '</div>';
     decorateRows(root);
   }
 
