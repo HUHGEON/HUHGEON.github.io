@@ -395,7 +395,7 @@
 
       function wrap(before, after, ph) {
         var s = area.selectionStart, e = area.selectionEnd;
-        var sel = area.value.slice(s, e) || ph || '';
+        var sel = area.value.slice(s, e);   // 선택된 게 있으면 감싸고, 없으면 빈 형식 + 커서만 안쪽
         area.value = area.value.slice(0, s) + before + sel + after + area.value.slice(e);
         area.focus(); area.selectionStart = s + before.length; area.selectionEnd = s + before.length + sel.length; render();
       }
