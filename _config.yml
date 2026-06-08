@@ -15,7 +15,7 @@ github_branch: "master"
 # GitHub 로그인(OAuth) 브로커 — Cloudflare Worker 배포 후 그 주소를 넣으세요.
 # 비워두면 자동으로 PAT(토큰 붙여넣기) 방식으로 대체됩니다.
 # 예) https://hg-oauth.<your-subdomain>.workers.dev
-oauth_url: ""
+oauth_url: "https://hg-oauth.rjs2337.workers.dev"
 
 # Social Links (필요 없는 항목은 빈칸으로 두면 표시되지 않습니다)
 email: dbgmlwns@hs.ac.kr
