@@ -927,6 +927,10 @@ html, body { max-width: 100%; }
 .app { width: 100%; max-width: 100%; }
 .main, .content, .view, #home-content { min-width: 0; max-width: 100%; overflow-x: clip; }
 img, .cover, .hero, .row-thumb { max-width: 100%; }
+/* 모바일에선 사이드바가 fixed 드로어(=sticky 아님)라, 가로 넘침 방지를 켜도 안전 */
+@media (max-width: 940px) {
+  html, body { overflow-x: hidden; }
+}
 
 /* 행 상단(카테고리 + 태그)이 좁은 폭에서 줄바꿈되도록 */
 .row-top { flex-wrap: wrap; row-gap: 6px; }
