@@ -1247,3 +1247,9 @@ body.owner .sb-login { display: none; }
 }
 .mg-apply-btn:hover { background: var(--accent-deep); transform: translateY(-1px); }
 .mg-apply-hint { font-size: 12.5px; color: var(--dim); }
+
+/* 카테고리 트리 드래그 정렬 */
+.tax-grip { cursor: grab; color: var(--faint); font-size: 13px; line-height: 1; user-select: none; padding: 0 3px; }
+.tax-grip:active { cursor: grabbing; }
+.tax-row.dragging { opacity: .45; }
+.tax-row.drop-target { outline: 2px dashed var(--accent); outline-offset: -2px; border-radius: 8px; }
