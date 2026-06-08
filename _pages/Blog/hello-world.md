@@ -1,9 +1,11 @@
 ---
 title: "HUHGEON's Blog"
 date: "2026-06-08 00:00"
-updated: "2026-06-09 01:04:29 +0900"
+updated: "2026-06-09 01:31:18 +0900"
 tags:
-    - 시작
+    - Hi
+    - there
+    - 👋
 ---
 <h2 id="hi-there-">Hi there 👋</h2>
 
@@ -19,4 +21,5 @@ tags:
 </ul>
 
 <p>주로 백엔드 이야기입니다 🙌</p>
+
 
