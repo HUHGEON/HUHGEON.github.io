@@ -25,11 +25,7 @@ instagram_username:
 linkedin_username:
 facebook_username:
 
-# External API (giscus 댓글은 나중에 본인 저장소로 설정 — docs/Comment System.md 참고)
-giscus_repo: "HUHGEON/HUHGEON.github.io"
-giscus_repoId: "R_kgDOSz8b8A"
-giscus_category: "Announcements"
-giscus_categoryId: "DIC_kwDOSz8b8M4C-vfV"
+# 댓글은 워커 KV(커스텀)로 처리 — giscus 미사용
 goatcounter_code:
 google_analytics:
 

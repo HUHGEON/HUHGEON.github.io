@@ -19,12 +19,6 @@
         {% if site.goatcounter_code %}
             <script data-goatcounter="https://{{ site.goatcounter_code }}.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
         {% endif %}
-        {% if page_type == "post" and is_doc == false %}
-            <meta name="giscus_repo" content="{{ site.giscus_repo }}">
-            <meta name="giscus_repoId" content="{{ site.giscus_repoId }}">
-            <meta name="giscus_category" content="{{ site.giscus_category }}">
-            <meta name="giscus_categoryId" content="{{ site.giscus_categoryId }}">
-        {% endif %}
         {% if page_type == "post" %}
             <link rel="preload" href="{{ '/assets/css/highlight.min.css' | prepend: site.baseurl }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
             <noscript><link rel="stylesheet" href="{{ '/assets/css/highlight.min.css' | prepend: site.baseurl }}"></noscript>
