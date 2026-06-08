@@ -5,31 +5,18 @@ updated: "2026-06-08 23:23:13 +0900"
 tags:
     - 일상
     - 시작
+bookmark: true
 ---
-<h1 id="안녕하세요-">안녕하세요 👋</h1>
 
-<p>안녕하세요 하이요 요요 용 </p>
-<h2 id="앞으로-쓸-것들">앞으로 쓸 것들</h2>
+## Hi there 👋
 
-<ul>
-  <li>개발하면서 배운 것</li>
-  <li>문제 해결 기록</li>
-  <li>공부 정리</li>
-</ul>
+백엔드 개발자 허건입니다 💻
+개발 공부와 프로젝트에서 배운 것들을 기록합니다.
 
-<h2 id="글-쓰는-방법-메모">글 쓰는 방법 메모</h2>
+### 📌 주로 다루는 것
 
-<p>이 테마는 <code class="language-plaintext highlighter-rouge">_pages/</code> 안에 카테고리 폴더를 만들고, 그 안에 <code class="language-plaintext highlighter-rouge">.md</code> 파일을 추가하면 글이 됩니다.<br />
-front matter에서 <code class="language-plaintext highlighter-rouge">title</code>과 <code class="language-plaintext highlighter-rouge">date</code>는 <strong>반드시</strong> 채워야 합니다.</p>
+- 📚 개발 공부 정리
+- 🛠️ 프로젝트 개발 & 회고
+- 🐛 문제 해결 기록
 
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">---</span>
-<span class="na">title</span><span class="pi">:</span> <span class="s2">"</span><span class="s">글</span><span class="nv"> </span><span class="s">제목"</span>
-<span class="na">date</span><span class="pi">:</span> <span class="s2">"</span><span class="s">2026-06-08"</span>
-<span class="na">tags</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">태그1</span>
-<span class="nn">---</span>
-</code></pre></div></div>
-
-<p>앞으로 잘 부탁드립니다!</p>
-
-
+주로 백엔드 이야기입니다 🙌
