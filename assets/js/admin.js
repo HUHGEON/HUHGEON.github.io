@@ -125,6 +125,11 @@
     s.onerror = function () { mmLoading = false; };
     document.head.appendChild(s);
   }
+  var mmTimer = null;
+  function scheduleMermaid() {   // 타이핑 중 과도한 재렌더(빈블럭 깜빡임) 방지
+    if (mmTimer) clearTimeout(mmTimer);
+    mmTimer = setTimeout(loadMermaid, 350);
+  }
 
   /* ---------- view switching (#write / #manage) ---------- */
   function showView(v) {
@@ -373,7 +378,7 @@
           var s = img.getAttribute('src');
           if (uploadedImages[s]) img.src = uploadedImages[s];
         });
-        if (prev.querySelector('.mermaid')) loadMermaid();   // mermaid 다이어그램 렌더
+        if (prev.querySelector('.mermaid')) scheduleMermaid();   // mermaid 다이어그램 렌더(디바운스)
         var title = (tEl.value || '').trim();
         pvTitle.textContent = title || '제목 없음';
         pvCat.textContent = cEl.value || 'Uncategorized';
@@ -411,7 +416,18 @@
           else if (act === 'codeblock') wrap('\n```js\n', '\n```\n', 'console.log("hi")');
           else if (act === 'quote') linePrefix('> ');
           else if (act === 'list') linePrefix('- ');
-          else if (act === 'table') insertAtCursor('\n| 제목1 | 제목2 | 제목3 |\n| --- | --- | --- |\n| 내용 | 내용 | 내용 |\n| 내용 | 내용 | 내용 |\n');
+          else if (act === 'table') {
+            var nc = parseInt(window.prompt('열(세로 칸) 개수?', '3'), 10);
+            if (!nc || nc < 1) return;
+            var nr = parseInt(window.prompt('행(가로 줄) 개수? — 헤더 제외', '2'), 10);
+            if (!nr || nr < 1) nr = 1;
+            nc = Math.min(nc, 12); nr = Math.min(nr, 50);
+            var emptyRow = '|', sep = '|';
+            for (var ci = 0; ci < nc; ci++) { emptyRow += '   |'; sep += ' --- |'; }
+            var out2 = '\n' + emptyRow + '\n' + sep + '\n';   // 헤더(빈칸) + 구분선
+            for (var ri = 0; ri < nr; ri++) out2 += emptyRow + '\n';
+            insertAtCursor(out2);
+          }
           else if (act === 'mermaid') insertAtCursor('\n```mermaid\nflowchart TD\n  A[시작] --> B{조건}\n  B -->|예| C[처리]\n  B -->|아니오| D[종료]\n```\n');
           else if (act === 'link') wrap('[', '](https://)', '링크');
           else if (act === 'image') wrap('![', '](https://)', 'alt');
