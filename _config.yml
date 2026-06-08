@@ -1,22 +1,22 @@
-title: example.com
-description: "Satellite - jekyll blog theme"
+title: HUHGEON's Blog
+description: "기록하고 공유하는 개발 블로그"
 logo_img: "/assets/img/favicon.webp"
 profile_img: "/assets/img/profile.webp"
 
-# Social Links
-email: example@gmail.com
-github_username: github
-twitter_username: twitter
-instagram_username: instagram
-linkedin_username: linkedin
-facebook_username: facebook
+# Social Links (필요 없는 항목은 빈칸으로 두면 표시되지 않습니다)
+email: dbgmlwns@hs.ac.kr
+github_username: HUHGEON
+twitter_username:
+instagram_username:
+linkedin_username:
+facebook_username:
 
-# External API
-giscus_repo: "byanko55/jekyll-theme-satellite"
-giscus_repoId: "R_kgDOJ6fqWg"
-giscus_category: "Q&A"
-giscus_categoryId: "DIC_kwDOJ6fqWs4Cc7p7"
-goatcounter_code: byanko77
+# External API (giscus 댓글은 나중에 본인 저장소로 설정 — docs/Comment System.md 참고)
+giscus_repo:
+giscus_repoId:
+giscus_category:
+giscus_categoryId:
+goatcounter_code:
 google_analytics:
 
 # If your repo name follows the format "<user-name>.github.io", then leave the below blank.
