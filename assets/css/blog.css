@@ -1102,3 +1102,6 @@ body.owner .sb-login { display: none; }
 }
 .c-compose textarea:focus { outline: none; border-color: var(--accent-line); }
 .c-compose .btn-primary { height: 36px; flex-shrink: 0; }
+
+/* 좋아요 요청 중 — 연타 방지 시각 표시 */
+.like-btn.busy { opacity: .6; pointer-events: none; }

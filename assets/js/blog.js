@@ -506,16 +506,20 @@
           .then(function (j) { if (j && j.count != null) { serverCount = j.count; paintLike(); } })
           .catch(function () {});
       }
+      var likeBusy = false;
       likeBtn.addEventListener('click', function () {
+        if (likeBusy) return;              // 요청 진행 중이면 연타 무시
         liked = !liked;
         localStorage.setItem(key, liked ? '1' : '0');
         if (likeOu) {
           if (serverCount != null) serverCount = Math.max(0, serverCount + (liked ? 1 : -1));
           paintLike();
+          likeBusy = true; likeBtn.classList.add('busy');
           fetch(likeOu + '/like?path=' + encodeURIComponent(location.pathname) + '&op=' + (liked ? 'inc' : 'dec'), { method: 'POST' })
             .then(function (r) { return r.json(); })
             .then(function (j) { if (j && j.count != null) { serverCount = j.count; paintLike(); } })
-            .catch(function () {});
+            .catch(function () {})
+            .then(function () { likeBusy = false; likeBtn.classList.remove('busy'); });
         } else {
           paintLike();   // 워커 없으면 로컬 토글(0/1)
         }
