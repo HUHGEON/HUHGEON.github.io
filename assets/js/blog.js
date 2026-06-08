@@ -737,12 +737,14 @@
     }
   }
 
-  /* 워커 조회수: 같은 브라우저는 글당 1번만 +1(쓰기), 그 외엔 읽기만 → KV 쓰기 한도 절약 */
+  /* 워커 조회수: '실제 글 상세'에서만, 같은 브라우저는 글당 1번만 +1(쓰기).
+     홈·카테고리·문서 페이지는 쓰기 안 함(총 방문 표시는 읽기만). → KV 쓰기 한도 대폭 절약 */
   function countViews() {
     var ou = ((window.AUTH || {}).oauthUrl || '').replace(/\/$/, '');
     if (!ou) return;
+    var isPost = !!$('#page-hits');                 // 글 상세에만 byline views 가 있음
     var vkey = 'hg-viewed:' + location.pathname;
-    var firstView = !localStorage.getItem(vkey);
+    var firstView = isPost && !localStorage.getItem(vkey);   // 글이고 첫 방문일 때만 쓰기
     if (firstView) { try { localStorage.setItem(vkey, '1'); } catch (e) {} }
     fetch(ou + '/views?path=' + encodeURIComponent(location.pathname) + (firstView ? '&inc=1' : ''))
       .then(function (r) { return r.json(); })
