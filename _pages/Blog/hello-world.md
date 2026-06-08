@@ -1,13 +1,14 @@
 ---
 title: "블로그를 시작합니다"
 date: "2026-06-08"
+updated: "2026-06-08"
 tags:
     - 일상
     - 시작
 ---
 <h1 id="안녕하세요-">안녕하세요 👋</h1>
 
-안녕하세요
+<p>안녕하세요 하이요 </p>
 <h2 id="앞으로-쓸-것들">앞으로 쓸 것들</h2>
 
 <ul>
@@ -30,4 +31,5 @@ front matter에서 <code class="language-plaintext highlighter-rouge">title</cod
 </code></pre></div></div>
 
 <p>앞으로 잘 부탁드립니다!</p>
+
 
