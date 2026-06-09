@@ -88,6 +88,24 @@
     }
     if (wrap) wrap.hidden = false;
   }
+  // 부팅 시 저장된 토큰을 GitHub에 실제로 검증한다.
+  // (가짜 토큰/이름을 localStorage에 박아 오너 UI를 여는 위조 차단)
+  function verifyAuth() {
+    var t = ghToken();
+    if (!t) { document.body.classList.remove('owner'); return; }
+    fetch('https://api.github.com/user', { headers: { 'Authorization': 'Bearer ' + t, 'Accept': 'application/vnd.github+json' } })
+      .then(function (r) { if (!r.ok) throw new Error('bad'); return r.json(); })
+      .then(function (u) {
+        localStorage.setItem('hg-gh-user', u.login);          // 위조된 이름 교정
+        document.body.classList.toggle('owner', isOwnerLoggedIn());
+        renderAuthBtn();
+      })
+      .catch(function () {
+        localStorage.removeItem('hg-gh-token'); localStorage.removeItem('hg-gh-user');
+        document.body.classList.remove('owner');              // 무효 토큰 → 오너 UI 제거
+        renderAuthBtn();
+      });
+  }
   window.__login = loginGitHub; window.__logout = logoutGitHub;
 
   /* ---------- popular tags ---------- */
@@ -728,14 +746,20 @@
     function me() { return ghUser(); }
     function canEdit(c) { return me() && c.login === me(); }
     function canDelete(c) { return me() && (c.login === me() || isOwnerLoggedIn()); }
-    function avatar(c) { return '<img class="c-avatar" src="' + escAttr(c.avatar || SITE.profile) + '" alt="">'; }
+    function ghLink(c, inner) {
+      return c.login
+        ? '<a href="https://github.com/' + escAttr(c.login) + '" target="_blank" rel="noopener">' + inner + '</a>'
+        : inner;
+    }
+    function avatar(c) { return ghLink(c, '<img class="c-avatar" src="' + escAttr(c.avatar || SITE.profile) + '" alt="">'); }
+    function cName(c) { return ghLink(c, '<span class="c-name">' + esc(c.name) + '</span>'); }
     function acts(c) {
       return (canEdit(c) ? '<button class="c-act" data-act="edit" data-id="' + c.id + '">수정</button>' : '') +
              (canDelete(c) ? '<button class="c-act c-del" data-act="del" data-id="' + c.id + '">삭제</button>' : '');
     }
     function commentHtml(c, replies) {
       return '<li class="comment" data-id="' + c.id + '">' + avatar(c) + '<div class="c-body">' +
-        '<div class="c-meta"><span class="c-name">' + esc(c.name) + '</span><span class="c-time">' + relTime(c.ts) + (c.edited ? ' · 수정됨' : '') + '</span>' +
+        '<div class="c-meta">' + cName(c) + '<span class="c-time">' + relTime(c.ts) + (c.edited ? ' · 수정됨' : '') + '</span>' +
         '<span class="c-tools">' + acts(c) + '</span></div>' +
         '<div class="c-text">' + esc(c.body) + '</div>' +
         (me() ? '<div class="c-actions"><button class="c-reply" data-act="reply" data-id="' + c.id + '">답글</button></div>' : '') +
@@ -744,7 +768,7 @@
     }
     function replyHtml(r) {
       return '<li class="comment reply" data-id="' + r.id + '">' + avatar(r) + '<div class="c-body">' +
-        '<div class="c-meta"><span class="c-name">' + esc(r.name) + '</span><span class="c-time">' + relTime(r.ts) + (r.edited ? ' · 수정됨' : '') + '</span>' +
+        '<div class="c-meta">' + cName(r) + '<span class="c-time">' + relTime(r.ts) + (r.edited ? ' · 수정됨' : '') + '</span>' +
         '<span class="c-tools">' + acts(r) + '</span></div>' +
         '<div class="c-text">' + esc(r.body) + '</div></div></li>';
     }
@@ -877,6 +901,7 @@
   ready(function () {
     renderSidebar();
     renderAuthBtn();
+    verifyAuth();
     bindSidebar();
     bindGlobal();
     bindSearch();

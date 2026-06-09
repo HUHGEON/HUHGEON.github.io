@@ -251,6 +251,21 @@
       }
     }
 
+    // 부팅 시 저장된 토큰을 GitHub에 실제로 검증한다.
+    // localStorage에 가짜 토큰/이름을 박아 오너 UI를 여는 위조를 차단.
+    function verifyAuth() {
+      var t = ghToken();
+      if (!t) { applyAuth(); return; }
+      document.body.classList.remove('owner');   // 검증 전엔 오너 UI 숨김
+      fetchUser(t).then(function (u) {
+        setSession(t, u.login);                  // 위조된 hg-gh-user를 진짜 로그인명으로 교정
+        applyAuth();
+      }).catch(function () {
+        setSession('', '');                      // 무효 토큰 → 세션 제거 → 게이트
+        applyAuth();
+      });
+    }
+
     function loginGitHub() {
       var a = authConf();
       if (!a.oauthUrl) { return connectViaPAT(); }   // 워커 미설정 시 PAT 폴백
@@ -831,6 +846,6 @@
     if (ghBtn) ghBtn.addEventListener('click', function () { if (isOwner()) logoutGitHub(); else loginGitHub(); });
     var gateLogin = $('#auth-login');
     if (gateLogin) gateLogin.addEventListener('click', loginGitHub);
-    applyAuth();
+    verifyAuth();
   });
 })();
