@@ -125,7 +125,13 @@ sitemap: false
           </div>
 
           <div class="ed-pane preview">
-            <div class="ed-pane-label"><span class="lv">▶</span> PREVIEW · 실시간</div>
+            <div class="ed-pane-label"><span class="lv">▶</span> PREVIEW · 실시간
+              <span class="pv-zoom">
+                <button type="button" id="pv-zoom-out" title="축소" aria-label="축소">−</button>
+                <span id="pv-zoom-val">100%</span>
+                <button type="button" id="pv-zoom-in" title="확대" aria-label="확대">+</button>
+              </span>
+            </div>
             <div class="ed-preview">
               <div class="content">
                 <div class="post-hero">

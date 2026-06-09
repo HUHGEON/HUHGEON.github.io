@@ -607,6 +607,14 @@ body.owner .post-actions { display: flex; }
   color: var(--faint); padding: 14px 26px 0; display: flex; align-items: center; gap: 8px;
 }
 .ed-pane-label .lv { color: var(--str); }
+.pv-zoom { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+.pv-zoom button {
+  width: 20px; height: 20px; line-height: 1; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--card-2); color: var(--text); cursor: pointer; font-size: 13px; font-family: inherit;
+  display: inline-flex; align-items: center; justify-content: center; padding: 0;
+}
+.pv-zoom button:hover { border-color: var(--accent); color: var(--accent); }
+.pv-zoom #pv-zoom-val { min-width: 34px; text-align: center; letter-spacing: 0; font-size: 11px; color: var(--text); }
 
 .ed-fields { padding: 14px 26px 0; display: flex; flex-direction: column; gap: 12px; }
 .ed-title {

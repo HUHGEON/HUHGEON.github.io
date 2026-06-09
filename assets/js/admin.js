@@ -394,6 +394,24 @@
         };
         set(); setTimeout(set, 60);
       }
+      // POSTS 의 body 는 렌더된 HTML 이라, 원본 .md 를 GitHub raw 에서 받아 마크다운으로 교체.
+      // (공개 repo → 토큰 불필요. 실패 시 위에서 채운 값 유지)
+      if (a && editingUrl) {
+        var conf = ghConf();
+        if (conf && conf.repo) {
+          var path = urlToPath(editingUrl).split('/').map(encodeURIComponent).join('/');
+          var rawU = 'https://raw.githubusercontent.com/' + conf.repo + '/' + encodeURIComponent(conf.branch) + '/' + path;
+          fetch(rawU, { cache: 'no-store' })
+            .then(function (r) { if (!r.ok) throw new Error('raw ' + r.status); return r.text(); })
+            .then(function (txt) {
+              var body = txt.replace(/^﻿/, '').replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '');
+              body = body.replace(/^\r?\n/, '');   // front matter 다음의 빈 줄 한 개 제거
+              a.value = body;
+              edRender();
+            })
+            .catch(function () { /* 오프라인 등 실패 시 기존 본문 유지 */ });
+        }
+      }
       edRender();
       return true;
     }
@@ -535,17 +553,56 @@
         window.addEventListener('resize', function () { anchorsDirty = true; });
       }
 
+      /* ── 미리보기 확대/축소 (50%~150%, localStorage 저장) ── */
+      (function () {
+        var content = preview && preview.querySelector('.content');
+        var valEl = $('#pv-zoom-val'), outBtn = $('#pv-zoom-out'), inBtn = $('#pv-zoom-in');
+        if (!content || !valEl || !outBtn || !inBtn) return;
+        var MIN = 50, MAX = 150, STEP = 10;
+        var z = parseInt(localStorage.getItem('hg-pv-zoom') || '100', 10);
+        if (isNaN(z)) z = 100;
+        function apply() {
+          z = Math.max(MIN, Math.min(MAX, z));
+          content.style.zoom = (z / 100);
+          valEl.textContent = z + '%';
+          localStorage.setItem('hg-pv-zoom', String(z));
+          anchorsDirty = true;   // 줌이 바뀌면 스크롤 앵커 다시 계산
+        }
+        outBtn.addEventListener('click', function () { z -= STEP; apply(); });
+        inBtn.addEventListener('click', function () { z += STEP; apply(); });
+        apply();
+      })();
+
+      // 텍스트 삽입은 value 재대입 대신 execCommand('insertText') 사용 →
+      // textarea 네이티브 undo(Cmd/Ctrl+Z) 기록이 보존된다.
+      // (insertText 는 현재 선택영역을 text 로 대체하고 input 이벤트도 발생시킨다)
+      function insertText(text) {
+        area.focus();
+        var ok = false;
+        try { ok = document.execCommand('insertText', false, text); } catch (e2) { ok = false; }
+        if (!ok) {   // 구형 폴백(undo 는 깨지지만 동작은 보장)
+          var s = area.selectionStart, e = area.selectionEnd;
+          area.value = area.value.slice(0, s) + text + area.value.slice(e);
+          area.selectionStart = area.selectionEnd = s + text.length;
+          render();
+        }
+      }
       function wrap(before, after, ph) {
+        area.focus();
         var s = area.selectionStart, e = area.selectionEnd;
         var sel = area.value.slice(s, e);   // 선택된 게 있으면 감싸고, 없으면 빈 형식 + 커서만 안쪽
-        area.value = area.value.slice(0, s) + before + sel + after + area.value.slice(e);
-        area.focus(); area.selectionStart = s + before.length; area.selectionEnd = s + before.length + sel.length; render();
+        insertText(before + sel + after);
+        area.selectionStart = s + before.length; area.selectionEnd = s + before.length + sel.length;
+        render();
       }
       function linePrefix(prefix) {
+        area.focus();
         var s = area.selectionStart;
         var ls = area.value.lastIndexOf('\n', s - 1) + 1;
-        area.value = area.value.slice(0, ls) + prefix + area.value.slice(ls);
-        area.focus(); area.selectionStart = area.selectionEnd = s + prefix.length; render();
+        area.selectionStart = area.selectionEnd = ls;   // 줄 시작에 캐럿 → 거기에 prefix 삽입
+        insertText(prefix);
+        area.selectionStart = area.selectionEnd = s + prefix.length;
+        render();
       }
       $$('.ed-tool').forEach(function (b) {
         b.addEventListener('click', function () {
@@ -576,10 +633,10 @@
         });
       });
       area.addEventListener('keydown', function (e) {
-        if (e.key === 'Tab') { e.preventDefault(); var s = area.selectionStart; area.value = area.value.slice(0, s) + '  ' + area.value.slice(area.selectionEnd); area.selectionStart = area.selectionEnd = s + 2; }
+        if (e.key === 'Tab') { e.preventDefault(); insertText('  '); }   // undo 보존
       });
 
-      function insertAtCursor(text) { var s = area.selectionStart, e = area.selectionEnd; area.value = area.value.slice(0, s) + text + area.value.slice(e); area.selectionStart = area.selectionEnd = s + text.length; area.focus(); render(); }
+      function insertAtCursor(text) { insertText(text); render(); }
       // URL 을 한 줄(공백/줄바꿈 없이)로 인코딩
       function encodeOneLine(url) {
         url = String(url).replace(/\s+/g, '');           // 줄바꿈/공백 제거 → 한 줄
