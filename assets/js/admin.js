@@ -573,6 +573,43 @@
         apply();
       })();
 
+      /* ── 편집창 줄 ↔ 미리보기 블록 대응 하이라이트 ──
+         · 편집창에서 캐럿이 있는 줄 → 해당 미리보기 블록을 하이라이트
+         · 미리보기 블록 클릭 → 편집창의 해당 줄을 선택해 표시 */
+      function blockForLine(L) {
+        var nodes = $$('[data-line]', prev), best = null;   // DOM 순서 = 줄번호 오름차순
+        for (var k = 0; k < nodes.length; k++) {
+          if (+nodes[k].getAttribute('data-line') <= L) best = nodes[k]; else break;
+        }
+        return best;
+      }
+      function setActiveBlock(el) {
+        var cur = prev.querySelector('.ed-active');
+        if (cur && cur !== el) cur.classList.remove('ed-active');
+        if (el) el.classList.add('ed-active');
+      }
+      function highlightFromCaret() {
+        var L = area.value.slice(0, area.selectionStart).split('\n').length - 1;
+        setActiveBlock(blockForLine(L));
+      }
+      area.addEventListener('click', highlightFromCaret);
+      area.addEventListener('keyup', highlightFromCaret);   // render 후 재적용(input 다음에 발생)
+      if (preview) {
+        prev.addEventListener('click', function (e) {
+          if (e.target.closest('.copy')) return;            // 복사 버튼 클릭은 제외
+          var el = e.target.closest('[data-line]');
+          if (!el || !prev.contains(el)) return;
+          var L = +el.getAttribute('data-line');
+          var lines = area.value.split('\n');
+          var start = 0;
+          for (var k = 0; k < L && k < lines.length; k++) start += lines[k].length + 1;
+          var end = start + (lines[L] != null ? lines[L].length : 0);
+          area.focus();
+          try { area.setSelectionRange(start, end); } catch (e2) {}   // 그 줄을 선택 → 편집창 하이라이트 + 자동 스크롤
+          setActiveBlock(el);
+        });
+      }
+
       // 텍스트 삽입은 value 재대입 대신 execCommand('insertText') 사용 →
       // textarea 네이티브 undo(Cmd/Ctrl+Z) 기록이 보존된다.
       // (insertText 는 현재 선택영역을 text 로 대체하고 input 이벤트도 발생시킨다)
