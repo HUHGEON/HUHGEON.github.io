@@ -671,17 +671,8 @@ select.ed-input { cursor: pointer; }
 .ed-area::-webkit-scrollbar-thumb, .ed-preview::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
 .ed-preview { flex: 1; overflow-y: auto; padding: 8px 0 40px; min-height: 0; background: var(--bg); }
-.ed-preview .content { padding: 0 26px 40px; max-width: none; }   /* 상단 패딩 제거: 첫 블록을 편집창 본문 첫 줄에 맞춤 */
-/* 미리보기 제목/글쓴이: 스크롤에서 분리한 고정 헤더 (편집창 상단바와 높이 맞춤용) */
-.ed-pane.preview .pv-hero {
-  flex-shrink: 0; margin: 0; padding: 12px 26px 14px; background: var(--bg);
-  border-bottom: 1px solid var(--border);
-}
-.ed-pane.preview .pv-hero .cat { margin-bottom: 8px; font-size: 12px; }
-.ed-pane.preview .pv-hero h1 { font-size: 22px; letter-spacing: -.4px; margin: 0 0 10px; }
-.ed-pane.preview .pv-hero .post-byline { margin: 0; }
-.ed-pane.preview .pv-hero img { width: 30px; height: 30px; }
-.ed-pane.preview .pv-hero .post-tags { margin-top: 10px; }
+.ed-preview .content { padding: 14px 26px 40px; max-width: none; }
+.ed-preview .post-hero { margin-bottom: 24px; }
 /* 편집창 줄 ↔ 미리보기 블록 대응 하이라이트 */
 .ed-preview .prose [data-line] { transition: background .15s ease, box-shadow .15s ease; }
 .ed-preview .prose .ed-active {

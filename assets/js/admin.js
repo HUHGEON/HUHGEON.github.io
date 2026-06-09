@@ -449,7 +449,6 @@
           fn.textContent = today() + '-' + slug + '.md';
         }
         anchorsDirty = true;   // 내용이 바뀌었으니 스크롤 앵커 다시 계산 필요
-        alignPanes();          // 제목 높이가 바뀌었을 수 있으니 본문 시작 높이 재정렬
       }
       edRender = render;
       var subEl0 = $('#ed-subcat');
@@ -556,21 +555,7 @@
           ensureAnchors(); syncing = true;
           area.scrollTop = mapPix(preview.scrollTop, 'p', 'e'); unlock();
         });
-        window.addEventListener('resize', function () { anchorsDirty = true; alignPanes(); });
-      }
-
-      /* ── 미리보기 본문 시작 높이를 편집창 본문(textarea) 시작에 맞춤 ──
-         편집창은 상단바+제목+툴바, 미리보기는 고정 헤더(제목/글쓴이) 높이가
-         달라서, 미리보기 스크롤 영역을 아래로 밀어 두 본문의 시작 Y를 정렬한다. */
-      function alignPanes() {
-        if (!preview || area.clientWidth === 0) return;   // 모바일(한 패널만)은 스킵
-        var hero = $('.pv-hero');
-        if (hero) hero.style.marginTop = '';
-        preview.style.marginTop = '';
-        // 헤더(제목/글쓴이)를 아래로 밀어 본문 바로 위에 붙이고, 본문 시작 Y를 편집창 textarea 와 맞춤.
-        // (헤더에 margin 을 주면 그 아래 미리보기 본문도 함께 내려가 갭 없이 정렬됨)
-        var d = area.getBoundingClientRect().top - preview.getBoundingClientRect().top;
-        if (d > 0) { if (hero) hero.style.marginTop = d + 'px'; else preview.style.marginTop = d + 'px'; }
+        window.addEventListener('resize', function () { anchorsDirty = true; });
       }
 
       /* ── 미리보기 확대/축소 (50%~150%, localStorage 저장) ── */
