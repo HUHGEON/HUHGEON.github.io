@@ -131,8 +131,7 @@ export default {
         let b = {}; try { b = await request.json(); } catch (e) {}
         const text = (b.body || '').toString().trim().slice(0, 4000);
         if (!text) return new Response(JSON.stringify({ error: 'empty' }), { headers: cors2, status: 400 });
-        const topCount = list.filter((c) => !c.parent).length;
-        if (!b.parent && topCount >= 5) return new Response(JSON.stringify({ error: 'limit', message: '이 글은 댓글 5개까지만 남길 수 있어요' }), { headers: cors2, status: 403 });
+        if (list.length >= 5) return new Response(JSON.stringify({ error: 'limit', message: '이 글은 댓글(답글 포함) 5개까지만 남길 수 있어요' }), { headers: cors2, status: 403 });
         const c = { id: crypto.randomUUID().slice(0, 8), login: user.login, name: user.name || user.login, avatar: user.avatar_url, body: text, ts: Date.now(), parent: b.parent || null };
         list.push(c);
         await env.VIEWS.put(key, JSON.stringify(list));

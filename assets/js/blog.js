@@ -742,6 +742,7 @@
     if (!ou) { var compose0 = $('#comment-compose'); if (compose0) compose0.innerHTML = '<div class="giscus-note">댓글 기능을 쓰려면 <code>_config.yml</code>의 <code>oauth_url</code>(워커)이 필요해요.</div>'; return; }
     var path = encodeURIComponent(location.pathname);
     var list = $('#comment-list'), compose = $('#comment-compose');
+    var atLimit = false;   // 댓글+답글 총합이 5개에 도달했는지
 
     function me() { return ghUser(); }
     function canEdit(c) { return me() && c.login === me(); }
@@ -762,7 +763,7 @@
         '<div class="c-meta">' + cName(c) + '<span class="c-time">' + relTime(c.ts) + (c.edited ? ' · 수정됨' : '') + '</span>' +
         '<span class="c-tools">' + acts(c) + '</span></div>' +
         '<div class="c-text">' + esc(c.body) + '</div>' +
-        (me() ? '<div class="c-actions"><button class="c-reply" data-act="reply" data-id="' + c.id + '">답글</button></div>' : '') +
+        (me() && !atLimit ? '<div class="c-actions"><button class="c-reply" data-act="reply" data-id="' + c.id + '">답글</button></div>' : '') +
         (replies.length ? '<ul class="reply-list">' + replies.map(replyHtml).join('') + '</ul>' : '') +
         '</div></li>';
     }
@@ -776,6 +777,7 @@
     function render(items) {
       items = items || [];
       setCounts(items.length);
+      atLimit = items.length >= 5;
       var tops = items.filter(function (c) { return !c.parent; });
       var byParent = {}; items.forEach(function (c) { if (c.parent) { (byParent[c.parent] = byParent[c.parent] || []).push(c); } });
       list.innerHTML = tops.length
@@ -784,9 +786,8 @@
       // compose: 로그인 상태에 따라 폼 or 로그인 버튼
       if (compose) {
         if (isLoggedIn()) {
-          var full = tops.length >= 5;
-          compose.innerHTML = full
-            ? '<div class="giscus-note">이 글은 댓글 5개가 다 찼어요. (답글은 남길 수 있어요)</div>'
+          compose.innerHTML = atLimit
+            ? '<div class="giscus-note">이 글은 댓글(답글 포함) 5개가 다 찼어요.</div>'
             : '<div class="comment-form"><textarea id="comment-input" placeholder="댓글을 남겨보세요" rows="3"></textarea><div class="comment-form-foot"><span class="cf-hint">@' + esc(me()) + ' 로 작성</span><button class="btn-primary" id="comment-submit">등록</button></div></div>';
         } else {
           compose.innerHTML = '<div class="comment-login"><span>로그인하면 댓글을 남길 수 있어요.</span><button class="btn-primary" id="comment-login-btn">GitHub 로그인</button></div>';
