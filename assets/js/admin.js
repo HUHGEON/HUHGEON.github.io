@@ -448,7 +448,7 @@
           else if (act === 'bold') wrap('**', '**', '굵게');
           else if (act === 'italic') wrap('*', '*', '기울임');
           else if (act === 'code') wrap('`', '`', 'code');
-          else if (act === 'codeblock') wrap('\n```js\n', '\n```\n', 'console.log("hi")');
+          else if (act === 'codeblock') wrap('\n```\n', '\n```\n', '');
           else if (act === 'quote') linePrefix('> ');
           else if (act === 'list') linePrefix('- ');
           else if (act === 'table') {
@@ -463,7 +463,7 @@
             for (var ri = 0; ri < nr; ri++) out2 += emptyRow + '\n';
             insertAtCursor(out2);
           }
-          else if (act === 'mermaid') insertAtCursor('\n```mermaid\nflowchart TD\n  A[시작] --> B{조건}\n  B -->|예| C[처리]\n  B -->|아니오| D[종료]\n```\n');
+          else if (act === 'mermaid') wrap('\n```mermaid\n', '\n```\n', '');
           else if (act === 'link') wrap('[', '](https://)', '링크');
           else if (act === 'image') wrap('![', '](https://)', 'alt');
         });
