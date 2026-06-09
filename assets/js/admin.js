@@ -564,9 +564,13 @@
          달라서, 미리보기 스크롤 영역을 아래로 밀어 두 본문의 시작 Y를 정렬한다. */
       function alignPanes() {
         if (!preview || area.clientWidth === 0) return;   // 모바일(한 패널만)은 스킵
+        var hero = $('.pv-hero');
+        if (hero) hero.style.marginTop = '';
         preview.style.marginTop = '';
+        // 헤더(제목/글쓴이)를 아래로 밀어 본문 바로 위에 붙이고, 본문 시작 Y를 편집창 textarea 와 맞춤.
+        // (헤더에 margin 을 주면 그 아래 미리보기 본문도 함께 내려가 갭 없이 정렬됨)
         var d = area.getBoundingClientRect().top - preview.getBoundingClientRect().top;
-        if (d > 0) preview.style.marginTop = d + 'px';
+        if (d > 0) { if (hero) hero.style.marginTop = d + 'px'; else preview.style.marginTop = d + 'px'; }
       }
 
       /* ── 미리보기 확대/축소 (50%~150%, localStorage 저장) ── */
