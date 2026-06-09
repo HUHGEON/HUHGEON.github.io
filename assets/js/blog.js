@@ -743,6 +743,7 @@
     var path = encodeURIComponent(location.pathname);
     var list = $('#comment-list'), compose = $('#comment-compose');
     var atLimit = false;   // 댓글+답글 총합이 5개에 도달했는지
+    var busy = false;      // 전송 중 중복 제출(더블클릭) 차단
 
     function me() { return ghUser(); }
     function canEdit(c) { return me() && c.login === me(); }
@@ -811,24 +812,26 @@
       var t = e.target;
       if (t.id === 'comment-login-btn') { loginGitHub(); return; }
       if (t.id === 'comment-submit') {
-        var inp = $('#comment-input'); var v = (inp && inp.value || '').trim(); if (!v) return;
-        t.disabled = true;
-        api('POST', { body: v }).then(function () { reload(); }).catch(function (m) { showToast(m); }).then(function () { t.disabled = false; });
+        var inp = $('#comment-input'); var v = (inp && inp.value || '').trim(); if (!v || busy) return;
+        busy = true; t.disabled = true;
+        api('POST', { body: v }).then(function () { reload(); }).catch(function (m) { showToast(m); }).then(function () { busy = false; t.disabled = false; });
         return;
       }
       var btn = t.closest('[data-act]'); if (!btn) return;
       var id = btn.getAttribute('data-id'), act = btn.getAttribute('data-act');
       var li = btn.closest('.comment');
       if (act === 'del') {
-        if (!confirm('이 댓글을 삭제할까요?')) return;
-        api('DELETE', null, id).then(reload).catch(showToast);
+        if (busy || !confirm('이 댓글을 삭제할까요?')) return;
+        busy = true;
+        api('DELETE', null, id).then(reload).catch(showToast).then(function () { busy = false; });
       } else if (act === 'reply') {
         if (li.querySelector('.c-compose')) return;
         var box = document.createElement('div'); box.className = 'c-compose';
         box.innerHTML = '<textarea placeholder="답글을 입력하세요" rows="2"></textarea><button class="btn-primary">등록</button>';
         li.querySelector('.c-body').appendChild(box);
         box.querySelector('textarea').focus();
-        box.querySelector('button').onclick = function () { var v = box.querySelector('textarea').value.trim(); if (!v) return; api('POST', { body: v, parent: id }).then(reload).catch(showToast); };
+        var rbtn = box.querySelector('button');
+        rbtn.onclick = function () { var v = box.querySelector('textarea').value.trim(); if (!v || busy) return; busy = true; rbtn.disabled = true; api('POST', { body: v, parent: id }).then(reload).catch(showToast).then(function () { busy = false; }); };
       } else if (act === 'edit') {
         var textEl = li.querySelector('.c-text'); if (li.querySelector('.c-compose')) return;
         var old = textEl.textContent;
@@ -837,7 +840,8 @@
         ed.querySelector('textarea').value = old;
         textEl.style.display = 'none'; textEl.parentNode.insertBefore(ed, textEl.nextSibling);
         ed.querySelector('textarea').focus();
-        ed.querySelector('button').onclick = function () { var v = ed.querySelector('textarea').value.trim(); if (!v) return; api('PUT', { body: v }, id).then(reload).catch(showToast); };
+        var ebtn = ed.querySelector('button');
+        ebtn.onclick = function () { var v = ed.querySelector('textarea').value.trim(); if (!v || busy) return; busy = true; ebtn.disabled = true; api('PUT', { body: v }, id).then(reload).catch(showToast).then(function () { busy = false; }); };
       }
     });
   }
