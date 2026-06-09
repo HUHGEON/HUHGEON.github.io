@@ -43,33 +43,36 @@
   function md(src) {
     src = src.replace(/\r\n/g, '\n');
     var out = [], lines = src.split('\n'), i = 0;
-    var para = [];
-    function flushPara(buf) { if (buf.length) { out.push('<p>' + inline(buf.join(' ')) + '</p>'); buf.length = 0; } }
+    var para = [], paraStart = 0;
+    // 각 블록 첫 태그에 data-line(원본 줄번호)을 심어 스크롤 동기화에 사용
+    function wl(html, n) { return html.replace(/^(\s*<[a-zA-Z][\w-]*)/, '$1 data-line="' + n + '"'); }
+    function flushPara(buf) { if (buf.length) { out.push(wl('<p>' + inline(buf.join(' ')) + '</p>', paraStart)); buf.length = 0; } }
     while (i < lines.length) {
       var ln = lines[i];
+      var start = i;
       var fence = ln.match(/^```\s*(\w*)/);
       if (fence) {
         flushPara(para);
         var lang = fence[1] || '', body = []; i++;
         while (i < lines.length && !/^```/.test(lines[i])) { body.push(lines[i]); i++; }
         i++;
-        if (lang === 'mermaid') { out.push('<div class="mermaid">' + esc(body.join('\n')) + '</div>'); continue; }
-        out.push('<div class="codeblock"><div class="cb-head">' +
+        if (lang === 'mermaid') { out.push(wl('<div class="mermaid">' + esc(body.join('\n')) + '</div>', start)); continue; }
+        out.push(wl('<div class="codeblock"><div class="cb-head">' +
           '<span class="d" style="background:#cf8a93"></span><span class="d" style="background:#c2a06a"></span><span class="d" style="background:#86ad8e"></span>' +
           '<span class="lang">' + (lang || 'code') + '</span>' +
           '<button class="copy"><svg viewBox="0 0 384 512"><path d="M192 0c-41.8 0-77.4 26.7-90.5 64H64C28.7 64 0 92.7 0 128V448c0 35.3 28.7 64 64 64H320c35.3 0 64-28.7 64-64V128c0-35.3-28.7-64-64-64H282.5C269.4 26.7 233.8 0 192 0zm0 64a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/></svg><span class="cl">Copy</span></button>' +
-          '</div><pre>' + highlightCode(body.join('\n'), lang) + '</pre></div>');
+          '</div><pre>' + highlightCode(body.join('\n'), lang) + '</pre></div>', start));
         continue;
       }
       var hd = ln.match(/^(#{1,3})\s+(.*)$/);
       if (hd) {
         flushPara(para); var lvl = hd[1].length;
-        if (lvl === 2) out.push('<h2><span class="hash">##</span>' + inline(hd[2]) + '</h2>');
-        else if (lvl === 3) out.push('<h3>' + inline(hd[2]) + '</h3>');
-        else out.push('<h2>' + inline(hd[2]) + '</h2>');
+        if (lvl === 2) out.push(wl('<h2><span class="hash">##</span>' + inline(hd[2]) + '</h2>', start));
+        else if (lvl === 3) out.push(wl('<h3>' + inline(hd[2]) + '</h3>', start));
+        else out.push(wl('<h2>' + inline(hd[2]) + '</h2>', start));
         i++; continue;
       }
-      if (/^(---|\*\*\*|___)\s*$/.test(ln)) { flushPara(para); out.push('<hr>'); i++; continue; }
+      if (/^(---|\*\*\*|___)\s*$/.test(ln)) { flushPara(para); out.push(wl('<hr>', start)); i++; continue; }
       // GFM 표: | h1 | h2 | 다음 줄이 | --- | --- |
       if (/^\s*\|.*\|\s*$/.test(ln) && i + 1 < lines.length && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1])) {
         flushPara(para);
@@ -79,13 +82,14 @@
         while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) { trs.push(splitRow(lines[i])); i++; }
         var thead = '<thead><tr>' + th.map(function (h) { return '<th>' + inline(h) + '</th>'; }).join('') + '</tr></thead>';
         var tbody = '<tbody>' + trs.map(function (r) { return '<tr>' + r.map(function (c) { return '<td>' + inline(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody>';
-        out.push('<div class="table-wrap"><table>' + thead + tbody + '</table></div>');
+        out.push(wl('<div class="table-wrap"><table>' + thead + tbody + '</table></div>', start));
         continue;
       }
-      if (/^>\s?/.test(ln)) { flushPara(para); var q = []; while (i < lines.length && /^>\s?/.test(lines[i])) { q.push(lines[i].replace(/^>\s?/, '')); i++; } out.push('<blockquote><p>' + inline(q.join(' ')) + '</p></blockquote>'); continue; }
-      if (/^\s*[-*]\s+/.test(ln)) { flushPara(para); var items = []; while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) { items.push('<li>' + inline(lines[i].replace(/^\s*[-*]\s+/, '')) + '</li>'); i++; } out.push('<ul>' + items.join('') + '</ul>'); continue; }
-      if (/^\s*\d+\.\s+/.test(ln)) { flushPara(para); var oi = []; while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) { oi.push('<li>' + inline(lines[i].replace(/^\s*\d+\.\s+/, '')) + '</li>'); i++; } out.push('<ol>' + oi.join('') + '</ol>'); continue; }
+      if (/^>\s?/.test(ln)) { flushPara(para); var q = []; while (i < lines.length && /^>\s?/.test(lines[i])) { q.push(lines[i].replace(/^>\s?/, '')); i++; } out.push(wl('<blockquote><p>' + inline(q.join(' ')) + '</p></blockquote>', start)); continue; }
+      if (/^\s*[-*]\s+/.test(ln)) { flushPara(para); var items = []; while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) { items.push('<li>' + inline(lines[i].replace(/^\s*[-*]\s+/, '')) + '</li>'); i++; } out.push(wl('<ul>' + items.join('') + '</ul>', start)); continue; }
+      if (/^\s*\d+\.\s+/.test(ln)) { flushPara(para); var oi = []; while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) { oi.push('<li>' + inline(lines[i].replace(/^\s*\d+\.\s+/, '')) + '</li>'); i++; } out.push(wl('<ol>' + oi.join('') + '</ol>', start)); continue; }
       if (/^\s*$/.test(ln)) { flushPara(para); i++; continue; }
+      if (!para.length) paraStart = i;
       para.push(ln); i++;
     }
     flushPara(para);
@@ -421,12 +425,115 @@
           var slug = title.toLowerCase().replace(/[^\w가-힣\s-]/g, '').replace(/\s+/g, '-').slice(0, 28) || 'untitled';
           fn.textContent = today() + '-' + slug + '.md';
         }
+        anchorsDirty = true;   // 내용이 바뀌었으니 스크롤 앵커 다시 계산 필요
       }
       edRender = render;
       var subEl0 = $('#ed-subcat');
       [area, tEl, cEl, gEl, subEl0].forEach(function (el) { if (el) el.addEventListener('input', render); });
       if (subEl0) subEl0.addEventListener('change', render);
       if (cEl) cEl.addEventListener('change', render);
+
+      /* ── 편집창 ↔ 미리보기 줄번호 기반 스크롤 동기화 ──────────────
+         미리보기의 각 블록은 data-line 으로 원본 줄번호를 안다.
+         · 미리보기 픽셀: 블록의 실제 offset
+         · 편집창 픽셀: textarea 와 똑같은 스타일의 숨은 mirror 로
+           해당 줄의 실제 위치(줄바꿈 반영)를 측정
+         이렇게 만든 (줄→픽셀) 앵커 테이블을 구간 보간해 반대쪽 위치를 구한다. */
+      var preview = $('.ed-preview');
+      var anchors = null, anchorsDirty = true, builtPH = -1, builtW = -1, mirror = null;
+
+      function ensureMirror() {
+        if (mirror) return mirror;
+        mirror = document.createElement('div');
+        var cs = getComputedStyle(area);
+        ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'lineHeight', 'letterSpacing',
+         'textTransform', 'tabSize', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft'
+        ].forEach(function (p) { mirror.style[p] = cs[p]; });
+        mirror.style.position = 'absolute';
+        mirror.style.left = '-9999px';
+        mirror.style.top = '0';
+        mirror.style.visibility = 'hidden';
+        mirror.style.boxSizing = 'border-box';
+        mirror.style.whiteSpace = 'pre-wrap';
+        mirror.style.overflowWrap = 'break-word';
+        mirror.style.wordBreak = cs.wordBreak;
+        document.body.appendChild(mirror);
+        return mirror;
+      }
+
+      function buildAnchors() {
+        anchors = [];
+        if (!preview) return;
+        var nodes = $$('[data-line]', prev);
+        if (!nodes.length) { builtPH = preview.scrollHeight; builtW = area.clientWidth; anchorsDirty = false; return; }
+        // 1) 편집창 픽셀: mirror 에 줄별 마커를 넣고 한 번에 측정
+        var m = ensureMirror();
+        m.style.width = area.clientWidth + 'px';
+        var srcLines = area.value.split('\n');
+        var needed = nodes.map(function (n) { return +n.getAttribute('data-line'); });
+        var uniq = needed.slice().sort(function (a, b) { return a - b; });
+        var html = '', li = 0;
+        for (var k = 0; k < srcLines.length; k++) {
+          while (li < uniq.length && uniq[li] === k) { html += '<span class="__a"></span>'; li++; }
+          html += esc(srcLines[k]) + '\n';
+        }
+        while (li < uniq.length) { html += '<span class="__a"></span>'; li++; }
+        m.innerHTML = html;
+        var mTop = m.getBoundingClientRect().top;
+        var ePixByLine = {};
+        var spans = m.querySelectorAll('.__a');
+        for (var s = 0; s < uniq.length; s++) ePixByLine[uniq[s]] = spans[s].getBoundingClientRect().top - mTop;
+        // 2) 미리보기 픽셀 + 앵커 결합
+        var pTop = preview.getBoundingClientRect().top;
+        nodes.forEach(function (n) {
+          var line = +n.getAttribute('data-line');
+          anchors.push({
+            e: ePixByLine[line],
+            p: n.getBoundingClientRect().top - pTop + preview.scrollTop
+          });
+        });
+        anchors.sort(function (a, b) { return a.e - b.e; });
+        builtPH = preview.scrollHeight; builtW = area.clientWidth; anchorsDirty = false;
+      }
+
+      function ensureAnchors() {
+        if (anchors && !anchorsDirty && preview.scrollHeight === builtPH && area.clientWidth === builtW) return;
+        buildAnchors();
+      }
+
+      // from('e'|'p') 쪽 픽셀 val 을 to 쪽 픽셀로 구간 보간
+      function mapPix(val, from, to) {
+        if (!anchors || !anchors.length) return val;
+        if (val <= anchors[0][from]) {
+          var f0 = anchors[0][from] > 0 ? val / anchors[0][from] : 0;
+          return f0 * anchors[0][to];
+        }
+        for (var j = 0; j < anchors.length - 1; j++) {
+          var a = anchors[j], b = anchors[j + 1];
+          if (val >= a[from] && val <= b[from]) {
+            var f = (b[from] - a[from]) > 0 ? (val - a[from]) / (b[from] - a[from]) : 0;
+            return a[to] + f * (b[to] - a[to]);
+          }
+        }
+        var last = anchors[anchors.length - 1];
+        return last[to] + (val - last[from]);   // 마지막 앵커 이후는 1:1 (브라우저가 최대값으로 클램프)
+      }
+
+      if (preview) {
+        var syncing = false;
+        function unlock() { requestAnimationFrame(function () { syncing = false; }); }
+        area.addEventListener('scroll', function () {
+          if (syncing || area.clientWidth === 0 || preview.clientHeight === 0) return;
+          ensureAnchors(); syncing = true;
+          preview.scrollTop = mapPix(area.scrollTop, 'e', 'p'); unlock();
+        });
+        preview.addEventListener('scroll', function () {
+          if (syncing || area.clientWidth === 0 || preview.clientHeight === 0) return;
+          ensureAnchors(); syncing = true;
+          area.scrollTop = mapPix(preview.scrollTop, 'p', 'e'); unlock();
+        });
+        window.addEventListener('resize', function () { anchorsDirty = true; });
+      }
 
       function wrap(before, after, ph) {
         var s = area.selectionStart, e = area.selectionEnd;
