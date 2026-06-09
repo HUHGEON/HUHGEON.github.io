@@ -2,6 +2,7 @@
 title: "HUHGEON's Blog"
 date: "2026-06-08 00:00"
 updated: "2026-06-09 01:34:18 +0900"
+bookmark: true
 tags:
     - Hi
     - there
