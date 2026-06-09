@@ -293,15 +293,17 @@
      HOME / category / full-list / tag views
      ============================================================ */
   var PER = 6;
-  var currentSort = 'date';   // 'date'(최신순) | 'views'(조회수순) — 카테고리/전체글에서만
+  var currentSort = 'date';   // 'date'(최신순) | 'oldest'(오래된순) | 'views'(조회수순) — 카테고리/전체글에서만
   var viewCounts = {};        // { url: 조회수 } 캐시
   function sortedList(list) {
-    if (currentSort !== 'views') return list;   // 기본은 등록일 내림차순(이미 정렬됨)
-    return list.slice().sort(function (a, b) { return (viewCounts[b.url] || 0) - (viewCounts[a.url] || 0); });
+    if (currentSort === 'views') return list.slice().sort(function (a, b) { return (viewCounts[b.url] || 0) - (viewCounts[a.url] || 0); });
+    if (currentSort === 'oldest') return list.slice().reverse();   // 기본 목록이 등록일 내림차순이라 뒤집으면 오름차순
+    return list;   // 'date' — 기본은 등록일 내림차순(이미 정렬됨)
   }
   function sortToggle() {
     return '<div class="sort-opts"><span class="so-lbl">정렬</span>' +
       '<button class="sort-opt' + (currentSort === 'date' ? ' on' : '') + '" data-sort="date">최신순</button>' +
+      '<button class="sort-opt' + (currentSort === 'oldest' ? ' on' : '') + '" data-sort="oldest">오래된순</button>' +
       '<button class="sort-opt' + (currentSort === 'views' ? ' on' : '') + '" data-sort="views">조회수순</button></div>';
   }
   function ensureViewCounts(cb) {
@@ -363,7 +365,7 @@
         '<p class="sub">' + list.length + '개의 글</p>' +
         (list.length === 0 ? '<div class="cat-empty">아직 이 카테고리에 글이 없어요 — 새 글 쓰기로 첫 글을 남겨보세요.</div>' : '') +
       '</div>' +
-      (list.length > 1 ? sortToggle() : '') +
+      (list.length >= 1 ? sortToggle() : '') +
       '<div class="rows" id="rows">' + sortedList(list).map(function (p, k) { return rowMarkup(p, k + 1); }).join('') + '</div>';
     decorateRows(root);
   }
@@ -561,6 +563,14 @@
     if (mermaidBlocks.length) loadMermaid();
 
     /* code blocks: highlight + wrap traffic-light header + copy (모든 글/문서) */
+    // rouge는 'language-xxx' 클래스를 바깥 div에 붙여 <code>엔 언어 정보가 없다.
+    // → 명시된 언어가 있으면 <code>로 옮겨 hljs가 그 언어로 칠하게 하고, 없을 때만 자동감지.
+    $$('.prose pre code').forEach(function (code) {
+      if (/\blanguage-[\w-]+/.test(code.className || '')) return;   // 이미 <code>에 언어 지정됨
+      var wrap = code.closest('[class*="language-"]');
+      var m = wrap ? (wrap.className.match(/language-([\w-]+)/) || [])[1] : null;
+      if (m && m !== 'mermaid') code.classList.add('language-' + m);   // 없으면 그대로 둬서 hljs 자동감지
+    });
     if (window.hljs) { try { hljs.highlightAll(); } catch (e) {} }
     $$('.prose pre').forEach(function (pre) {
       if (pre.closest('.codeblock')) return;
