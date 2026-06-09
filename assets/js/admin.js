@@ -44,9 +44,13 @@
     src = src.replace(/\r\n/g, '\n');
     var out = [], lines = src.split('\n'), i = 0;
     var para = [], paraStart = 0;
-    // 각 블록 첫 태그에 data-line(원본 줄번호)을 심어 스크롤 동기화에 사용
-    function wl(html, n) { return html.replace(/^(\s*<[a-zA-Z][\w-]*)/, '$1 data-line="' + n + '"'); }
-    function flushPara(buf) { if (buf.length) { out.push(wl('<p>' + inline(buf.join(' ')) + '</p>', paraStart)); buf.length = 0; } }
+    // 각 블록 첫 태그에 data-line(시작 줄) + 다중 줄이면 data-line-end(끝 줄)을 심는다.
+    // → 스크롤 동기화 + 줄↔블록 하이라이트/선택(코드블록 등 블록 전체 선택)에 사용
+    function wl(html, n, end) {
+      var attr = ' data-line="' + n + '"' + (end != null && end !== n ? ' data-line-end="' + end + '"' : '');
+      return html.replace(/^(\s*<[a-zA-Z][\w-]*)/, '$1' + attr);
+    }
+    function flushPara(buf) { if (buf.length) { out.push(wl('<p>' + inline(buf.join(' ')) + '</p>', paraStart, paraStart + buf.length - 1)); buf.length = 0; } }
     while (i < lines.length) {
       var ln = lines[i];
       var start = i;
@@ -56,12 +60,13 @@
         var lang = fence[1] || '', body = []; i++;
         while (i < lines.length && !/^```/.test(lines[i])) { body.push(lines[i]); i++; }
         i++;
-        if (lang === 'mermaid') { out.push(wl('<div class="mermaid">' + esc(body.join('\n')) + '</div>', start)); continue; }
+        var fenceEnd = i - 1;   // 닫는 ``` 줄 (블록 전체: start..fenceEnd)
+        if (lang === 'mermaid') { out.push(wl('<div class="mermaid">' + esc(body.join('\n')) + '</div>', start, fenceEnd)); continue; }
         out.push(wl('<div class="codeblock"><div class="cb-head">' +
           '<span class="d" style="background:#cf8a93"></span><span class="d" style="background:#c2a06a"></span><span class="d" style="background:#86ad8e"></span>' +
           '<span class="lang">' + (lang || 'code') + '</span>' +
           '<button class="copy"><svg viewBox="0 0 384 512"><path d="M192 0c-41.8 0-77.4 26.7-90.5 64H64C28.7 64 0 92.7 0 128V448c0 35.3 28.7 64 64 64H320c35.3 0 64-28.7 64-64V128c0-35.3-28.7-64-64-64H282.5C269.4 26.7 233.8 0 192 0zm0 64a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/></svg><span class="cl">Copy</span></button>' +
-          '</div><pre>' + highlightCode(body.join('\n'), lang) + '</pre></div>', start));
+          '</div><pre>' + highlightCode(body.join('\n'), lang) + '</pre></div>', start, fenceEnd));
         continue;
       }
       var hd = ln.match(/^(#{1,3})\s+(.*)$/);
@@ -82,12 +87,12 @@
         while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) { trs.push({ cells: splitRow(lines[i]), line: i }); i++; }
         var thead = '<thead><tr data-line="' + start + '">' + th.map(function (h) { return '<th>' + inline(h) + '</th>'; }).join('') + '</tr></thead>';
         var tbody = '<tbody>' + trs.map(function (r) { return '<tr data-line="' + r.line + '">' + r.cells.map(function (c) { return '<td>' + inline(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody>';
-        out.push(wl('<div class="table-wrap"><table>' + thead + tbody + '</table></div>', start));
+        out.push(wl('<div class="table-wrap"><table>' + thead + tbody + '</table></div>', start, i - 1));
         continue;
       }
-      if (/^>\s?/.test(ln)) { flushPara(para); var q = []; while (i < lines.length && /^>\s?/.test(lines[i])) { q.push(lines[i].replace(/^>\s?/, '')); i++; } out.push(wl('<blockquote><p>' + inline(q.join(' ')) + '</p></blockquote>', start)); continue; }
-      if (/^\s*[-*]\s+/.test(ln)) { flushPara(para); var items = []; while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) { items.push('<li data-line="' + i + '">' + inline(lines[i].replace(/^\s*[-*]\s+/, '')) + '</li>'); i++; } out.push(wl('<ul>' + items.join('') + '</ul>', start)); continue; }
-      if (/^\s*\d+\.\s+/.test(ln)) { flushPara(para); var oi = []; while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) { oi.push('<li data-line="' + i + '">' + inline(lines[i].replace(/^\s*\d+\.\s+/, '')) + '</li>'); i++; } out.push(wl('<ol>' + oi.join('') + '</ol>', start)); continue; }
+      if (/^>\s?/.test(ln)) { flushPara(para); var q = []; while (i < lines.length && /^>\s?/.test(lines[i])) { q.push(lines[i].replace(/^>\s?/, '')); i++; } out.push(wl('<blockquote><p>' + inline(q.join(' ')) + '</p></blockquote>', start, i - 1)); continue; }
+      if (/^\s*[-*]\s+/.test(ln)) { flushPara(para); var items = []; while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) { items.push('<li data-line="' + i + '">' + inline(lines[i].replace(/^\s*[-*]\s+/, '')) + '</li>'); i++; } out.push(wl('<ul>' + items.join('') + '</ul>', start, i - 1)); continue; }
+      if (/^\s*\d+\.\s+/.test(ln)) { flushPara(para); var oi = []; while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) { oi.push('<li data-line="' + i + '">' + inline(lines[i].replace(/^\s*\d+\.\s+/, '')) + '</li>'); i++; } out.push(wl('<ol>' + oi.join('') + '</ol>', start, i - 1)); continue; }
       if (/^\s*$/.test(ln)) { flushPara(para); i++; continue; }
       if (!para.length) paraStart = i;
       para.push(ln); i++;
@@ -444,6 +449,7 @@
           fn.textContent = today() + '-' + slug + '.md';
         }
         anchorsDirty = true;   // 내용이 바뀌었으니 스크롤 앵커 다시 계산 필요
+        alignPanes();          // 제목 높이가 바뀌었을 수 있으니 본문 시작 높이 재정렬
       }
       edRender = render;
       var subEl0 = $('#ed-subcat');
@@ -550,7 +556,17 @@
           ensureAnchors(); syncing = true;
           area.scrollTop = mapPix(preview.scrollTop, 'p', 'e'); unlock();
         });
-        window.addEventListener('resize', function () { anchorsDirty = true; });
+        window.addEventListener('resize', function () { anchorsDirty = true; alignPanes(); });
+      }
+
+      /* ── 미리보기 본문 시작 높이를 편집창 본문(textarea) 시작에 맞춤 ──
+         편집창은 상단바+제목+툴바, 미리보기는 고정 헤더(제목/글쓴이) 높이가
+         달라서, 미리보기 스크롤 영역을 아래로 밀어 두 본문의 시작 Y를 정렬한다. */
+      function alignPanes() {
+        if (!preview || area.clientWidth === 0) return;   // 모바일(한 패널만)은 스킵
+        preview.style.marginTop = '';
+        var d = area.getBoundingClientRect().top - preview.getBoundingClientRect().top;
+        if (d > 0) preview.style.marginTop = d + 'px';
       }
 
       /* ── 미리보기 확대/축소 (50%~150%, localStorage 저장) ── */
@@ -576,12 +592,19 @@
       /* ── 편집창 줄 ↔ 미리보기 블록 대응 하이라이트 ──
          · 편집창에서 캐럿이 있는 줄 → 해당 미리보기 블록을 하이라이트
          · 미리보기 블록 클릭 → 편집창의 해당 줄을 선택해 표시 */
+      function lineRange(el) {   // 블록의 [시작줄, 끝줄]
+        var s = +el.getAttribute('data-line');
+        var e = el.getAttribute('data-line-end');
+        return [s, e != null ? +e : s];
+      }
       function blockForLine(L) {
-        var nodes = $$('[data-line]', prev), best = null;   // DOM 순서 = 줄번호 오름차순
+        var nodes = $$('[data-line]', prev), best = null, bestSpan = Infinity, fb = null;
         for (var k = 0; k < nodes.length; k++) {
-          if (+nodes[k].getAttribute('data-line') <= L) best = nodes[k]; else break;
+          var r = lineRange(nodes[k]);
+          if (r[0] <= L && L <= r[1] && (r[1] - r[0]) <= bestSpan) { best = nodes[k]; bestSpan = r[1] - r[0]; }  // 가장 좁은(구체적) 블록
+          if (r[0] <= L) fb = nodes[k];   // 포함 블록이 없을 때(빈 줄 등) 폴백
         }
-        return best;
+        return best || fb;
       }
       function setActiveBlock(el) {
         var cur = prev.querySelector('.ed-active');
@@ -594,18 +617,18 @@
       }
       area.addEventListener('click', highlightFromCaret);
       area.addEventListener('keyup', highlightFromCaret);   // render 후 재적용(input 다음에 발생)
+      function lineOffset(lines, L) { var o = 0; for (var k = 0; k < L && k < lines.length; k++) o += lines[k].length + 1; return o; }
       if (preview) {
         prev.addEventListener('click', function (e) {
           if (e.target.closest('.copy')) return;            // 복사 버튼 클릭은 제외
           var el = e.target.closest('[data-line]');
           if (!el || !prev.contains(el)) return;
-          var L = +el.getAttribute('data-line');
+          var r = lineRange(el);                            // 코드블록 등은 블록 전체 줄범위를 선택
           var lines = area.value.split('\n');
-          var start = 0;
-          for (var k = 0; k < L && k < lines.length; k++) start += lines[k].length + 1;
-          var end = start + (lines[L] != null ? lines[L].length : 0);
+          var selStart = lineOffset(lines, r[0]);
+          var selEnd = lineOffset(lines, r[1]) + (lines[r[1]] != null ? lines[r[1]].length : 0);
           area.focus();
-          try { area.setSelectionRange(start, end); } catch (e2) {}   // 그 줄을 선택 → 편집창 하이라이트 + 자동 스크롤
+          try { area.setSelectionRange(selStart, selEnd); } catch (e2) {}   // 편집창에서 그 블록을 선택 + 자동 스크롤
           setActiveBlock(el);
         });
       }
