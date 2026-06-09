@@ -79,15 +79,15 @@
         var splitRow = function (r) { return r.trim().replace(/^\||\|$/g, '').split('|').map(function (c) { return c.trim(); }); };
         var th = splitRow(ln); i += 2;
         var trs = [];
-        while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) { trs.push(splitRow(lines[i])); i++; }
-        var thead = '<thead><tr>' + th.map(function (h) { return '<th>' + inline(h) + '</th>'; }).join('') + '</tr></thead>';
-        var tbody = '<tbody>' + trs.map(function (r) { return '<tr>' + r.map(function (c) { return '<td>' + inline(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody>';
+        while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) { trs.push({ cells: splitRow(lines[i]), line: i }); i++; }
+        var thead = '<thead><tr data-line="' + start + '">' + th.map(function (h) { return '<th>' + inline(h) + '</th>'; }).join('') + '</tr></thead>';
+        var tbody = '<tbody>' + trs.map(function (r) { return '<tr data-line="' + r.line + '">' + r.cells.map(function (c) { return '<td>' + inline(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody>';
         out.push(wl('<div class="table-wrap"><table>' + thead + tbody + '</table></div>', start));
         continue;
       }
       if (/^>\s?/.test(ln)) { flushPara(para); var q = []; while (i < lines.length && /^>\s?/.test(lines[i])) { q.push(lines[i].replace(/^>\s?/, '')); i++; } out.push(wl('<blockquote><p>' + inline(q.join(' ')) + '</p></blockquote>', start)); continue; }
-      if (/^\s*[-*]\s+/.test(ln)) { flushPara(para); var items = []; while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) { items.push('<li>' + inline(lines[i].replace(/^\s*[-*]\s+/, '')) + '</li>'); i++; } out.push(wl('<ul>' + items.join('') + '</ul>', start)); continue; }
-      if (/^\s*\d+\.\s+/.test(ln)) { flushPara(para); var oi = []; while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) { oi.push('<li>' + inline(lines[i].replace(/^\s*\d+\.\s+/, '')) + '</li>'); i++; } out.push(wl('<ol>' + oi.join('') + '</ol>', start)); continue; }
+      if (/^\s*[-*]\s+/.test(ln)) { flushPara(para); var items = []; while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) { items.push('<li data-line="' + i + '">' + inline(lines[i].replace(/^\s*[-*]\s+/, '')) + '</li>'); i++; } out.push(wl('<ul>' + items.join('') + '</ul>', start)); continue; }
+      if (/^\s*\d+\.\s+/.test(ln)) { flushPara(para); var oi = []; while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) { oi.push('<li data-line="' + i + '">' + inline(lines[i].replace(/^\s*\d+\.\s+/, '')) + '</li>'); i++; } out.push(wl('<ol>' + oi.join('') + '</ol>', start)); continue; }
       if (/^\s*$/.test(ln)) { flushPara(para); i++; continue; }
       if (!para.length) paraStart = i;
       para.push(ln); i++;
