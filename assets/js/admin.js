@@ -9,12 +9,8 @@
   var TKEY = 'hg-theme';
   function applyTheme(t) { document.body.classList.toggle('light', t === 'light'); }
   applyTheme(localStorage.getItem(TKEY) || 'dark');
-  (function () {
-    var h = (location.hash || '').toLowerCase();
-    if (h.indexOf('guest') > -1) localStorage.removeItem('hg-owner');
-    if (localStorage.getItem('hg-owner') === null) localStorage.setItem('hg-owner', '1');
-    document.body.classList.toggle('owner', localStorage.getItem('hg-owner') === '1');
-  })();
+  // owner 여부는 applyAuth()의 isOwner()(실제 GitHub 토큰 필요)로만 결정한다.
+  // (localStorage 이름만 박아서 관리 UI가 열리던 문제 제거)
 
   function $(s, r) { return (r || document).querySelector(s); }
   function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }

@@ -28,8 +28,8 @@
         <script>
             (function () {
                 if ((localStorage.getItem('hg-theme') || 'dark') === 'light') document.body.classList.add('light');
-                // 오너 = GitHub 로그인 계정이 저장소 주인일 때만 (로그인 안 하면 글쓰기/관리 숨김)
-                var owner = window.AUTH && window.AUTH.ownerLogin && localStorage.getItem('hg-gh-user') === window.AUTH.ownerLogin;
+                // 오너 = GitHub 토큰 + 로그인 계정이 저장소 주인일 때만 (이름만 박아선 안 열림)
+                var owner = window.AUTH && window.AUTH.ownerLogin && !!localStorage.getItem('hg-gh-token') && localStorage.getItem('hg-gh-user') === window.AUTH.ownerLogin;
                 if (owner) document.body.classList.add('owner');
             })();
         </script>
