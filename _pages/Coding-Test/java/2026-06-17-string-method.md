@@ -1,9 +1,11 @@
 ---
 title: "String method"
-date: "2026-06-17 14:45:57 +0900"
+date: "2026-06-17 14:45"
+updated: "2026-06-17 14:53:10 +0900"
 tags:
     - java
     - string
+    - codingtest
 ---
 # [String] 코딩테스트 자바 문자열 총정리 — 이럴 땐 이거 쓴다
 
@@ -277,4 +279,5 @@ String result = new String(arr);         // "Apple"
 - `char`는 **숫자** — `c - 'a'`로 글자를 배열 인덱스로 직접 쓴다.
 - 비교는 `equals`, 자르기는 끝 인덱스 미포함, `replaceAll`은 정규식 — 이 셋이 단골 실수다.
 - 입력을 빠르게 쪼개고 이어붙이는 건 다음 글 **[StringBuilder / StringTokenizer]** 에서 다룬다.
+
 
