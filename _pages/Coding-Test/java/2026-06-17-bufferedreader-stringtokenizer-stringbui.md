@@ -1,7 +1,7 @@
 ---
 title: "BufferedReader · StringTokenizer · StringBuilder"
 date: "2026-06-17 16:42"
-updated: "2026-06-17 22:22:08 +0900"
+updated: "2026-06-18 16:25:56 +0900"
 tags:
     - java
     - string
@@ -233,5 +233,6 @@ public class Main {
 - 입력은 **`BufferedReader`로 한 줄 → `StringTokenizer`로 토큰 → `parseInt`**, 출력은 **`StringBuilder`에 모아 `print` 한 번**.
 - 줄이 바뀌면 `StringTokenizer`를 새로 만들고, `main`엔 `throws IOException`.
 - **BR + ST + StringBuilder** 템플릿 하나면 모든 문제의 입출력 골격이 끝난다.
+
 
 
